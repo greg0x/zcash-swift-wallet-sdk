@@ -34,13 +34,11 @@ public actor NullifierPIRClient {
     ///
     /// - Parameter serverURL: Base URL of the PIR server (e.g., "https://pir.example.com")
     /// - Throws: `PIRError.clientCreationFailed` if connection fails
-    public init(serverURL: String) async throws {
-        // Create client on a background thread since it involves network I/O
-        let ptr = try await Task.detached {
-            serverURL.withCString { urlPtr in
-                zcashlc_pir_client_create(urlPtr)
-            }
-        }.value
+    public init(serverURL: String) throws {
+        // Match TorClient pattern - direct FFI call
+        let ptr = serverURL.withCString { urlPtr in
+            zcashlc_pir_client_create(urlPtr)
+        }
         
         guard let ptr else {
             throw PIRError.clientCreationFailed(
@@ -64,15 +62,12 @@ public actor NullifierPIRClient {
     /// called once after initialization. Subsequent queries will be fast (~500ms).
     ///
     /// - Throws: `PIRError.keyPrecomputationFailed` if key generation fails
-    public func precomputeKeys() async throws {
+    public func precomputeKeys() throws {
         guard let client = clientPtr else {
             throw PIRError.clientNotInitialized
         }
         
-        // Run key precomputation on background thread (CPU-intensive)
-        let success = await Task.detached {
-            zcashlc_pir_precompute_keys(client)
-        }.value
+        let success = zcashlc_pir_precompute_keys(client)
         
         guard success else {
             throw PIRError.keyPrecomputationFailed(
@@ -92,7 +87,7 @@ public actor NullifierPIRClient {
     /// - Parameter nullifier: 32-byte nullifier to check
     /// - Returns: `SpentInfo` if the note is spent, `nil` if unspent
     /// - Throws: `PIRError` on invalid input or query failure
-    public func checkNullifier(_ nullifier: Data) async throws -> SpentInfo? {
+    public func checkNullifier(_ nullifier: Data) throws -> SpentInfo? {
         guard nullifier.count == 32 else {
             throw PIRError.invalidNullifierLength(nullifier.count)
         }
@@ -103,12 +98,9 @@ public actor NullifierPIRClient {
             throw PIRError.keysNotReady
         }
         
-        // Perform PIR query on background thread (network I/O)
-        let resultPtr = try await Task.detached {
-            nullifier.withUnsafeBytes { bytes in
-                zcashlc_pir_check_nullifier(client, bytes.baseAddress!.assumingMemoryBound(to: UInt8.self))
-            }
-        }.value
+        let resultPtr = nullifier.withUnsafeBytes { bytes in
+            zcashlc_pir_check_nullifier(client, bytes.baseAddress!.assumingMemoryBound(to: UInt8.self))
+        }
         
         // Null result means not spent (or error - check last error)
         guard let result = resultPtr else {
@@ -136,9 +128,9 @@ public actor NullifierPIRClient {
     /// - Parameter nullifiers: Array of 32-byte nullifiers to check
     /// - Returns: Array of optional `SpentInfo`, one per input nullifier
     /// - Throws: `PIRError` on invalid input or query failure
-    public func checkNullifiers(_ nullifiers: [Data]) async throws -> [SpentInfo?] {
+    public func checkNullifiers(_ nullifiers: [Data]) throws -> [SpentInfo?] {
         // Validate all nullifiers are 32 bytes
-        for (index, nf) in nullifiers.enumerated() {
+        for nf in nullifiers {
             guard nf.count == 32 else {
                 throw PIRError.invalidNullifierLength(nf.count)
             }
@@ -157,16 +149,13 @@ public actor NullifierPIRClient {
             flatData.append(nf)
         }
         
-        // Perform batch PIR query on background thread
-        let resultPtr = try await Task.detached {
-            flatData.withUnsafeBytes { bytes in
-                zcashlc_pir_check_nullifiers(
-                    client,
-                    bytes.baseAddress!.assumingMemoryBound(to: UInt8.self),
-                    nullifiers.count
-                )
-            }
-        }.value
+        let resultPtr = flatData.withUnsafeBytes { bytes in
+            zcashlc_pir_check_nullifiers(
+                client,
+                bytes.baseAddress!.assumingMemoryBound(to: UInt8.self),
+                UInt(nullifiers.count)
+            )
+        }
         
         guard let arrayResult = resultPtr else {
             throw PIRError.queryFailed(
