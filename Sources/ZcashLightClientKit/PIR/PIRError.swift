@@ -26,6 +26,9 @@ public enum PIRError: Error, Equatable {
     
     /// The PIR client has not been initialized.
     case clientNotInitialized
+    
+    /// Failed to read from wallet database.
+    case walletReadFailed(String)
 }
 
 extension PIRError: LocalizedError {
@@ -43,6 +46,8 @@ extension PIRError: LocalizedError {
             return "PIR query failed: \(message)"
         case .clientNotInitialized:
             return "PIR client has not been initialized"
+        case .walletReadFailed(let message):
+            return "Failed to read from wallet: \(message)"
         }
     }
 }
