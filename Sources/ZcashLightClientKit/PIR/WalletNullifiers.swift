@@ -37,7 +37,7 @@ public enum WalletNullifiers {
         let dbPath = dataDbURL.path
         let pathBytes = dbPath.utf8CString
         
-        let result = pathBytes.withUnsafeBufferPointer { pathPtr -> OpaquePointer? in
+        let result = pathBytes.withUnsafeBufferPointer { pathPtr -> UnsafeMutablePointer<FfiPirNullifierArray>? in
             // Convert CChar buffer to UInt8 pointer, excluding the null terminator
             pathPtr.baseAddress?.withMemoryRebound(to: UInt8.self, capacity: pathPtr.count - 1) { ptr in
                 zcashlc_pir_get_unspent_nullifiers(
