@@ -8,6 +8,26 @@
 import Foundation
 import libzcashlc
 
+/// PIR protocol selection.
+///
+/// Choose based on your network constraints:
+/// - `ypir`: Larger queries (~5.8 MB) but faster server processing
+/// - `inspire`: Smaller queries (~416 KB) but longer key prep
+public enum PIRProtocol: UInt32, Sendable {
+    /// YPIR+SP protocol - larger queries (~5.8 MB), faster server
+    case ypir = 0
+    /// InsPIRe protocol - smaller queries (~416 KB), better for mobile
+    case inspire = 1
+    
+    /// Convert to FFI enum value
+    var ffiValue: FfiPirProtocol {
+        switch self {
+        case .ypir: return FfiPirProtocol(0)
+        case .inspire: return FfiPirProtocol(1)
+        }
+    }
+}
+
 /// Client for privacy-preserving nullifier lookups using PIR.
 ///
 /// This client connects to a PIR server and allows checking whether notes
@@ -16,8 +36,11 @@ import libzcashlc
 /// ## Usage
 ///
 /// ```swift
-/// // Create client and connect to server
-/// let client = try await NullifierPIRClient(serverURL: "https://pir.example.com")
+/// // Create client with InsPIRe protocol (smaller queries for mobile)
+/// let client = try await NullifierPIRClient(
+///     serverURL: "https://pir.example.com",
+///     protocol: .inspire
+/// )
 ///
 /// // Precompute cryptographic keys (expensive, do once)
 /// try await client.precomputeKeys()
@@ -30,14 +53,21 @@ import libzcashlc
 public actor NullifierPIRClient {
     private var clientPtr: OpaquePointer?
     
+    /// The PIR protocol in use.
+    public let pirProtocol: PIRProtocol
+    
     /// Initialize and connect to a PIR server.
     ///
-    /// - Parameter serverURL: Base URL of the PIR server (e.g., "https://pir.example.com")
+    /// - Parameters:
+    ///   - serverURL: Base URL of the PIR server (e.g., "https://pir.example.com")
+    ///   - protocol: PIR protocol to use (default: `.inspire` for smaller mobile queries)
     /// - Throws: `PIRError.clientCreationFailed` if connection fails
-    public init(serverURL: String) throws {
+    public init(serverURL: String, protocol pirProtocol: PIRProtocol = .inspire) throws {
+        self.pirProtocol = pirProtocol
+        
         // Match TorClient pattern - direct FFI call
         let ptr = serverURL.withCString { urlPtr in
-            zcashlc_pir_client_create(urlPtr)
+            zcashlc_pir_client_create(urlPtr, pirProtocol.ffiValue)
         }
         
         guard let ptr else {
@@ -57,9 +87,13 @@ public actor NullifierPIRClient {
     
     /// Precompute cryptographic keys for fast queries.
     ///
-    /// This is an expensive operation (~5-20 seconds depending on hardware) that
-    /// generates the cryptographic material needed for PIR queries. It should be
-    /// called once after initialization. Subsequent queries will be fast (~500ms).
+    /// This is an expensive operation that generates the cryptographic material
+    /// needed for PIR queries. It should be called once after initialization.
+    /// Subsequent queries will be fast (~500ms).
+    ///
+    /// Timing varies by protocol:
+    /// - **YPIR**: ~25 seconds
+    /// - **InsPIRe**: ~3 seconds
     ///
     /// - Throws: `PIRError.keyPrecomputationFailed` if key generation fails
     public func precomputeKeys() throws {
