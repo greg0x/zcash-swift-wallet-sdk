@@ -157,14 +157,20 @@ public actor NullifierPIRClient {
         )
     }
     
-    /// Statistics from a PIR query.
+    /// Statistics from a PIR query with actual measurements.
     public struct QueryStats: Sendable {
         /// Bytes uploaded (query data)
         public let uploadBytes: Int
         /// Bytes downloaded (response data)
         public let downloadBytes: Int
-        /// Server processing time in milliseconds (nil if not available)
-        public let serverTimeMs: Double?
+        /// Query generation time in milliseconds
+        public let queryGenMs: Double
+        /// Network round-trip time in milliseconds
+        public let networkMs: Double
+        /// Server processing time in milliseconds
+        public let serverMs: Double
+        /// Decryption time in milliseconds
+        public let decryptMs: Double
     }
     
     /// Result of a nullifier check with statistics.
@@ -222,11 +228,14 @@ public actor NullifierPIRClient {
             spentInfo = nil
         }
         
-        // Extract stats
+        // Extract stats with actual measurements
         let stats = QueryStats(
             uploadBytes: Int(ffiResult.stats.upload_bytes),
             downloadBytes: Int(ffiResult.stats.download_bytes),
-            serverTimeMs: ffiResult.stats.server_time_ms >= 0 ? Double(ffiResult.stats.server_time_ms) : nil
+            queryGenMs: ffiResult.stats.query_gen_ms,
+            networkMs: ffiResult.stats.network_ms,
+            serverMs: ffiResult.stats.server_ms,
+            decryptMs: ffiResult.stats.decrypt_ms
         )
         
         return CheckResult(spentInfo: spentInfo, stats: stats)
