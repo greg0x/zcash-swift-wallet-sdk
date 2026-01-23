@@ -157,6 +157,81 @@ public actor NullifierPIRClient {
         )
     }
     
+    /// Statistics from a PIR query.
+    public struct QueryStats: Sendable {
+        /// Bytes uploaded (query data)
+        public let uploadBytes: Int
+        /// Bytes downloaded (response data)
+        public let downloadBytes: Int
+        /// Server processing time in milliseconds (nil if not available)
+        public let serverTimeMs: Double?
+    }
+    
+    /// Result of a nullifier check with statistics.
+    public struct CheckResult: Sendable {
+        /// Spent info if the nullifier was found, nil otherwise
+        public let spentInfo: SpentInfo?
+        /// Query statistics with actual byte counts
+        public let stats: QueryStats
+    }
+    
+    /// Check if a nullifier has been spent, with query statistics.
+    ///
+    /// - Parameter nullifier: 32-byte nullifier to check
+    /// - Returns: `CheckResult` containing spent info and actual byte counts
+    /// - Throws: `PIRError` on invalid input or query failure
+    public func checkNullifierWithStats(_ nullifier: Data) throws -> CheckResult {
+        guard nullifier.count == 32 else {
+            throw PIRError.invalidNullifierLength(nullifier.count)
+        }
+        guard let client = clientPtr else {
+            throw PIRError.clientNotInitialized
+        }
+        guard keysReady else {
+            throw PIRError.keysNotReady
+        }
+        
+        let resultPtr = nullifier.withUnsafeBytes { bytes in
+            zcashlc_pir_check_nullifier_with_stats(client, bytes.baseAddress!.assumingMemoryBound(to: UInt8.self))
+        }
+        
+        guard let result = resultPtr else {
+            let errorLen = zcashlc_last_error_length()
+            if errorLen > 0 {
+                throw PIRError.queryFailed(
+                    lastPIRErrorMessage(fallback: "Unknown error during PIR query")
+                )
+            }
+            // Should not happen - FFI always returns a result or sets error
+            throw PIRError.queryFailed("Unexpected null result from PIR query")
+        }
+        
+        defer { zcashlc_pir_free_check_result(result) }
+        
+        let ffiResult = result.pointee
+        
+        // Extract spent info if present
+        let spentInfo: SpentInfo?
+        if let infoPtr = ffiResult.spent_info {
+            let info = infoPtr.pointee
+            spentInfo = SpentInfo(
+                blockHeight: BlockHeight(info.block_height),
+                txIndex: Int(info.tx_index)
+            )
+        } else {
+            spentInfo = nil
+        }
+        
+        // Extract stats
+        let stats = QueryStats(
+            uploadBytes: Int(ffiResult.stats.upload_bytes),
+            downloadBytes: Int(ffiResult.stats.download_bytes),
+            serverTimeMs: ffiResult.stats.server_time_ms >= 0 ? Double(ffiResult.stats.server_time_ms) : nil
+        )
+        
+        return CheckResult(spentInfo: spentInfo, stats: stats)
+    }
+    
     /// Check multiple nullifiers in batch.
     ///
     /// - Parameter nullifiers: Array of 32-byte nullifiers to check
