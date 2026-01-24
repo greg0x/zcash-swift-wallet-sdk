@@ -1242,6 +1242,30 @@ extension SDKSynchronizer {
             (try? await allReceivedTransactions()) ?? []
         }
     }
+    
+    // MARK: - PIR (Private Information Retrieval)
+    
+    /// Create a PIR client that uses this synchronizer's lightwalletd connection.
+    ///
+    /// The PIR client shares the same gRPC connection as the synchronizer, eliminating
+    /// the need for a separate PIR server URL. Call `initialize()` on the returned
+    /// client before making queries.
+    ///
+    /// - Returns: A new `NullifierPIRClient` configured to use this synchronizer's connection.
+    public func createPIRClient() -> NullifierPIRClient {
+        return NullifierPIRClient(lightWalletService: initializer.lightWalletService)
+    }
+    
+    /// Get PIR parameters from the connected lightwalletd server.
+    ///
+    /// This is useful for checking PIR availability and getting the cutoff height
+    /// before deciding whether to use PIR queries.
+    ///
+    /// - Returns: PIR parameters from the server.
+    /// - Throws: If the gRPC call fails.
+    public func getPirParams() async throws -> PirParamsResponse {
+        return try await initializer.lightWalletService.getPirParams(mode: .direct)
+    }
 }
 
 extension InternalSyncStatus {

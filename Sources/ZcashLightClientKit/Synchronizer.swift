@@ -526,6 +526,26 @@ public protocol Synchronizer: AnyObject {
     ///
     /// - Throws rustDeleteAccount as a common indicator of the operation failure
     func deleteAccount(_ accountUUID: AccountUUID) async throws -> Void
+    
+    // MARK: - PIR (Private Information Retrieval)
+    
+    /// Create a PIR client that uses this synchronizer's lightwalletd connection.
+    ///
+    /// The PIR client shares the same gRPC connection as the synchronizer, eliminating
+    /// the need for a separate PIR server URL. Call `initialize()` on the returned
+    /// client before making queries.
+    ///
+    /// - Returns: A new `NullifierPIRClient` configured to use this synchronizer's connection.
+    func createPIRClient() -> NullifierPIRClient
+    
+    /// Get PIR parameters from the connected lightwalletd server.
+    ///
+    /// This is useful for checking PIR availability and getting the cutoff height
+    /// before deciding whether to use PIR queries.
+    ///
+    /// - Returns: PIR parameters from the server.
+    /// - Throws: If the gRPC call fails.
+    func getPirParams() async throws -> PirParamsResponse
 }
 
 public enum SyncStatus: Equatable {
