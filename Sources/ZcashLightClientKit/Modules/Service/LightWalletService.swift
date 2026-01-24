@@ -247,4 +247,39 @@ protocol LightWalletService: AnyObject {
         accountUUID: AccountUUID,
         mode: ServiceMode
     ) async throws -> TransparentAddressCheckResult
+    
+    // MARK: - PIR (Private Information Retrieval)
+    
+    /// Get PIR parameters needed by clients to construct privacy-preserving queries.
+    ///
+    /// Returns cutoff height, Cuckoo hash params, and InsPIRe-specific parameters.
+    /// Clients should use trial decryption for blocks above `pirCutoffHeight`,
+    /// and PIR queries for blocks at or below it.
+    ///
+    /// - Parameter mode: The service mode to use for the request.
+    /// - Returns: PIR parameters response containing setup information.
+    /// - Throws: `serviceGetPirParamsFailed` when GRPC call fails.
+    func getPirParams(mode: ServiceMode) async throws -> PirParamsResponse
+    
+    /// Execute an InsPIRe query against the nullifier database.
+    ///
+    /// The query should be constructed using the parameters from `getPirParams()`.
+    /// This performs a privacy-preserving lookup without revealing which nullifier
+    /// is being queried.
+    ///
+    /// - Parameters:
+    ///   - query: Serialized InsPIRe query bytes (bincode-encoded).
+    ///   - mode: The service mode to use for the request.
+    /// - Returns: Serialized InsPIRe response bytes.
+    /// - Throws: `serviceInspireQueryFailed` when GRPC call fails.
+    func inspireQuery(_ query: Data, mode: ServiceMode) async throws -> InspireQueryResponse
+    
+    /// Get the current status of the PIR service.
+    ///
+    /// Useful for monitoring and debugging PIR availability.
+    ///
+    /// - Parameter mode: The service mode to use for the request.
+    /// - Returns: PIR service status response.
+    /// - Throws: `serviceGetPirStatusFailed` when GRPC call fails.
+    func getPirStatus(mode: ServiceMode) async throws -> PirStatusResponse
 }

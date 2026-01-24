@@ -45,6 +45,12 @@ public enum ZcashErrorCode: String {
     case serviceGetTaddressTxidsFailed = "ZSRVC0010"
     /// LightWalletService.getMempoolStream failed.
     case serviceGetMempoolStreamFailed = "ZSRVC0011"
+    /// LightWalletService.getPirParams failed.
+    case serviceGetPirParamsFailed = "ZSRVC0012"
+    /// LightWalletService.inspireQuery failed.
+    case serviceInspireQueryFailed = "ZSRVC0013"
+    /// LightWalletService.getPirStatus failed.
+    case serviceGetPirStatusFailed = "ZSRVC0014"
     /// Endpoint is not provided
     case torServiceMissingEndpoint = "ZTSRV0001"
     /// Tor client fails to resolve ServiceMode

@@ -270,4 +270,32 @@ class LightWalletGRPCServiceOverTor: LightWalletGRPCService {
         await super.closeConnections()
         await serviceConnections.closeConnections()
     }
+    
+    // MARK: - PIR (Private Information Retrieval)
+    // PIR methods delegate to base class for direct mode.
+    // Tor mode is not currently supported for PIR since PIR queries are already privacy-preserving.
+    
+    override func getPirParams(mode: ServiceMode) async throws -> PirParamsResponse {
+        guard mode == .direct else {
+            // PIR is already privacy-preserving, Tor not needed
+            throw ZcashError.grpcServiceCalledWithTorMode
+        }
+        return try await super.getPirParams(mode: mode)
+    }
+    
+    override func inspireQuery(_ query: Data, mode: ServiceMode) async throws -> InspireQueryResponse {
+        guard mode == .direct else {
+            // PIR is already privacy-preserving, Tor not needed
+            throw ZcashError.grpcServiceCalledWithTorMode
+        }
+        return try await super.inspireQuery(query, mode: mode)
+    }
+    
+    override func getPirStatus(mode: ServiceMode) async throws -> PirStatusResponse {
+        guard mode == .direct else {
+            // PIR is already privacy-preserving, Tor not needed
+            throw ZcashError.grpcServiceCalledWithTorMode
+        }
+        return try await super.getPirStatus(mode: mode)
+    }
 }

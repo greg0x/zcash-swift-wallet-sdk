@@ -449,6 +449,51 @@ class LightWalletGRPCService: LightWalletService {
         .torRequired
     }
     
+    // MARK: - PIR (Private Information Retrieval)
+    
+    func getPirParams(mode: ServiceMode) async throws -> PirParamsResponse {
+        guard mode == .direct else {
+            throw ZcashError.grpcServiceCalledWithTorMode
+        }
+        
+        do {
+            let request = GetPirParamsRequest()
+            return try await compactTxStreamer.getPirParams(request)
+        } catch {
+            let serviceError = error.mapToServiceError()
+            throw ZcashError.serviceGetPirParamsFailed(serviceError)
+        }
+    }
+    
+    func inspireQuery(_ query: Data, mode: ServiceMode) async throws -> InspireQueryResponse {
+        guard mode == .direct else {
+            throw ZcashError.grpcServiceCalledWithTorMode
+        }
+        
+        do {
+            var request = InspireQueryRequest()
+            request.query = query
+            return try await compactTxStreamer.inspireQuery(request)
+        } catch {
+            let serviceError = error.mapToServiceError()
+            throw ZcashError.serviceInspireQueryFailed(serviceError)
+        }
+    }
+    
+    func getPirStatus(mode: ServiceMode) async throws -> PirStatusResponse {
+        guard mode == .direct else {
+            throw ZcashError.grpcServiceCalledWithTorMode
+        }
+        
+        do {
+            let request = GetPirStatusRequest()
+            return try await compactTxStreamer.getPirStatus(request)
+        } catch {
+            let serviceError = error.mapToServiceError()
+            throw ZcashError.serviceGetPirStatusFailed(serviceError)
+        }
+    }
+    
     func closeConnections() async {
         _ = channel?.close()
     }
