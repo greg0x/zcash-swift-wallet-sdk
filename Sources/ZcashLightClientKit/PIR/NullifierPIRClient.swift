@@ -6,144 +6,7 @@
 //
 
 import Foundation
-
-// TODO: Import NullifierCrypto when the UniFFI bindings are integrated.
-// The NullifierCrypto module provides:
-// - InspireCryptoState: Manages PIR crypto state
-// - computeCuckooBuckets(): Computes Cuckoo hash bucket indices
-// - computeFingerprint(): Computes 8-byte fingerprint
-// - searchBucket(): Searches bucket for fingerprint
-// 
-// Integration options:
-// 1. Add as Swift package: .package(path: "../nullifier-pir/crates/crypto")
-// 2. Copy generated bindings to Sources/ZcashLightClientKit/PIR/NullifierCrypto/
-//
-// For now, this file uses a shim layer that will be replaced when integrated.
-
-#if canImport(NullifierCrypto)
 import NullifierCrypto
-#else
-// MARK: - Placeholder Types (until NullifierCrypto is integrated)
-// These placeholder types mirror the NullifierCrypto API.
-// They will be removed once the UniFFI bindings are integrated.
-
-/// Placeholder for NullifierCrypto.InspireCryptoState
-private class InspireCryptoState {
-    init(params: PirParams) throws {
-        fatalError("NullifierCrypto not integrated - see TODO above")
-    }
-    func precomputeKeys() throws {}
-    func keysReady() -> Bool { false }
-    func getCuckooParams() -> CuckooParams { CuckooParams() }
-    func generateQuery(bucketIdx: UInt64) throws -> QueryResult {
-        fatalError("NullifierCrypto not integrated")
-    }
-    func decryptResponse(queryStateId: UInt64, responseBytes: Data) throws -> Data {
-        fatalError("NullifierCrypto not integrated")
-    }
-}
-
-/// Placeholder for NullifierCrypto.PirParams
-private struct PirParams {
-    var inspireSetup: InspireSetup
-    var cuckooParams: CuckooParams
-    var recordSize: UInt64
-    var factor: UInt64
-    
-    init(inspireSetup: InspireSetup, cuckooParams: CuckooParams, recordSize: UInt64, factor: UInt64) {
-        self.inspireSetup = inspireSetup
-        self.cuckooParams = cuckooParams
-        self.recordSize = recordSize
-        self.factor = factor
-    }
-}
-
-/// Placeholder for NullifierCrypto.InspireSetup
-private struct InspireSetup {
-    var polyLen: UInt64
-    var dbDim1: UInt64
-    var instances: UInt64
-    var dbRows: UInt64
-    var dbCols: UInt64
-    var gamma: UInt64
-    var interpolateDegree: UInt64
-    var ptModulus: UInt64
-    var c: UInt64
-    var tGsw: UInt64
-    var q2Bits: UInt64
-    var tExpLeft: UInt64
-    
-    init(polyLen: UInt64 = 0, dbDim1: UInt64 = 0, instances: UInt64 = 0, dbRows: UInt64 = 0, 
-         dbCols: UInt64 = 0, gamma: UInt64 = 0, interpolateDegree: UInt64 = 0, ptModulus: UInt64 = 0,
-         c: UInt64 = 0, tGsw: UInt64 = 0, q2Bits: UInt64 = 0, tExpLeft: UInt64 = 0) {
-        self.polyLen = polyLen
-        self.dbDim1 = dbDim1
-        self.instances = instances
-        self.dbRows = dbRows
-        self.dbCols = dbCols
-        self.gamma = gamma
-        self.interpolateDegree = interpolateDegree
-        self.ptModulus = ptModulus
-        self.c = c
-        self.tGsw = tGsw
-        self.q2Bits = q2Bits
-        self.tExpLeft = tExpLeft
-    }
-}
-
-/// Placeholder for NullifierCrypto.CuckooParams
-private struct CuckooParams {
-    var seed: UInt64
-    var numBuckets: UInt64
-    var bucketSize: UInt32
-    var entrySize: UInt32
-    var entriesPerBucket: UInt32
-    
-    init(seed: UInt64 = 0, numBuckets: UInt64 = 0, bucketSize: UInt32 = 0, 
-         entrySize: UInt32 = 0, entriesPerBucket: UInt32 = 0) {
-        self.seed = seed
-        self.numBuckets = numBuckets
-        self.bucketSize = bucketSize
-        self.entrySize = entrySize
-        self.entriesPerBucket = entriesPerBucket
-    }
-}
-
-/// Placeholder for NullifierCrypto.CuckooBuckets
-private struct CuckooBuckets {
-    var bucket1: UInt64
-    var bucket2: UInt64
-}
-
-/// Placeholder for NullifierCrypto.QueryResult
-private struct QueryResult {
-    var queryBytes: Data
-    var queryStateId: UInt64
-}
-
-/// Placeholder for NullifierCrypto.SpentInfo
-private struct NullifierCryptoSpentInfo {
-    var blockHeight: UInt32
-    var txIndex: UInt16
-}
-
-/// Placeholder for NullifierCrypto.CryptoError
-private enum CryptoError: Error {
-    case notImplemented
-}
-
-private func computeCuckooBuckets(nullifier: Data, hashSeed: UInt64, numBuckets: UInt64) -> CuckooBuckets {
-    fatalError("NullifierCrypto not integrated")
-}
-
-private func computeFingerprint(nullifier: Data, hashSeed: UInt64) -> Data {
-    fatalError("NullifierCrypto not integrated")
-}
-
-private func searchBucket(bucketData: Data, fingerprint: Data, entrySize: UInt32) -> NullifierCryptoSpentInfo? {
-    fatalError("NullifierCrypto not integrated")
-}
-#endif
 
 /// Client for privacy-preserving nullifier lookups using PIR.
 ///
@@ -184,7 +47,8 @@ public actor NullifierPIRClient {
     /// making queries.
     ///
     /// - Parameter lightWalletService: The gRPC service to use for PIR queries.
-    public init(lightWalletService: LightWalletService) {
+    /// - Note: Internal because LightWalletService is internal. Use Synchronizer.createPIRClient() instead.
+    init(lightWalletService: LightWalletService) {
         self.lightWalletService = lightWalletService
     }
     
@@ -206,8 +70,8 @@ public actor NullifierPIRClient {
             throw PIRError.serviceNotReady
         }
         
-        guard params.hasInspireSetup && params.hasCuckooParams else {
-            throw PIRError.invalidServerParams("Missing InsPIRe setup or Cuckoo params")
+        guard params.hasInspireParams && params.hasCuckooParams else {
+            throw PIRError.invalidServerParams("Missing InsPIRe params or Cuckoo params")
         }
         
         self.pirParams = params
@@ -259,7 +123,7 @@ public actor NullifierPIRClient {
         }
         
         guard let cryptoState = cryptoState,
-              let params = pirParams else {
+              let _ = pirParams else {
             throw PIRError.clientNotInitialized
         }
         
@@ -367,41 +231,48 @@ public actor NullifierPIRClient {
     }
     
     /// Convert gRPC PirParamsResponse to UniFFI PirParams.
-    private func convertToUniffiParams(_ params: PirParamsResponse) throws -> PirParams {
-        // Convert Cuckoo params
+    private func convertToUniffiParams(_ params: PirParamsResponse) throws -> NullifierCrypto.PirParams {
+        // Convert Cuckoo params from gRPC
         let grpcCuckoo = params.cuckooParams
         let cuckooSeed = hashSeedToUInt64(grpcCuckoo.hashSeed)
         
-        let cuckoo = CuckooParams(
+        // Entry format: fingerprint(8) + blockHeight(4) + txIndex(2) = 14 bytes
+        let entrySize: UInt32 = 14
+        let entriesPerBucket = grpcCuckoo.bucketSize / entrySize
+        
+        let cuckoo = NullifierCrypto.CuckooParams(
             seed: cuckooSeed,
             numBuckets: grpcCuckoo.numBuckets,
             bucketSize: grpcCuckoo.bucketSize,
-            entrySize: grpcCuckoo.entrySize,
-            entriesPerBucket: grpcCuckoo.entriesPerBucket
+            entrySize: entrySize,
+            entriesPerBucket: entriesPerBucket
         )
         
-        // Convert InsPIRe setup
-        let grpcSetup = params.inspireSetup
-        let inspire = InspireSetup(
-            polyLen: grpcSetup.polyLen,
-            dbDim1: grpcSetup.dbDim1,
-            instances: grpcSetup.instances,
-            dbRows: grpcSetup.dbRows,
-            dbCols: grpcSetup.dbCols,
-            gamma: grpcSetup.gamma,
-            interpolateDegree: grpcSetup.interpolateDegree,
-            ptModulus: grpcSetup.ptModulus,
-            c: grpcSetup.c,
-            tGsw: grpcSetup.tGsw,
-            q2Bits: grpcSetup.q2Bits,
-            tExpLeft: grpcSetup.tExpLeft
+        // Convert InsPIRe params
+        // The server provides: numRows, numCols, elementSize, factor
+        // We need to compute or use standard values for the rest
+        let grpcInspire = params.inspireParams
+        
+        let inspire = NullifierCrypto.InspireSetup(
+            polyLen: 2048,  // Standard poly length
+            dbDim1: grpcInspire.numRows,
+            instances: 1,
+            dbRows: grpcInspire.numRows,
+            dbCols: grpcInspire.numCols,
+            gamma: 2048,  // Standard gamma
+            interpolateDegree: 32,  // Standard
+            ptModulus: 0,  // Will be computed by crypto layer
+            c: 1,
+            tGsw: 0,  // Will be computed
+            q2Bits: 0,  // Will be computed
+            tExpLeft: 0  // Will be computed
         )
         
-        return PirParams(
+        return NullifierCrypto.PirParams(
             inspireSetup: inspire,
             cuckooParams: cuckoo,
-            recordSize: params.recordSize,
-            factor: params.factor
+            recordSize: grpcInspire.elementSize,
+            factor: UInt64(grpcInspire.factor)
         )
     }
     

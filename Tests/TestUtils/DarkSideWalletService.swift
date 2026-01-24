@@ -227,6 +227,20 @@ class DarksideWalletService: LightWalletService {
     func fetchUTXOsByAddress(address: String, dbData: (String, UInt), networkType: NetworkType, accountUUID: AccountUUID, mode: ServiceMode) async throws -> TransparentAddressCheckResult {
         .notFound
     }
+    
+    // MARK: - PIR Methods (stubs for darkside testing)
+    
+    func getPirParams(mode: ServiceMode) async throws -> PirParamsResponse {
+        throw ZcashError.serviceGetInfoFailed(.generalError(message: "PIR not implemented in darkside"))
+    }
+    
+    func inspireQuery(_ query: Data, mode: ServiceMode) async throws -> InspireQueryResponse {
+        throw ZcashError.serviceGetInfoFailed(.generalError(message: "PIR not implemented in darkside"))
+    }
+    
+    func getPirStatus(mode: ServiceMode) async throws -> PirStatusResponse {
+        throw ZcashError.serviceGetInfoFailed(.generalError(message: "PIR not implemented in darkside"))
+    }
 }
 
 enum DarksideWalletDConstants: NetworkConstants {

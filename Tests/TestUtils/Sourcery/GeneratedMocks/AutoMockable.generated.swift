@@ -2576,6 +2576,46 @@ class SynchronizerMock: Synchronizer {
         try await deleteAccountClosure!(accountUUID)
     }
 
+    // MARK: - createPIRClient
+
+    var createPIRClientCallsCount = 0
+    var createPIRClientCalled: Bool {
+        return createPIRClientCallsCount > 0
+    }
+    var createPIRClientReturnValue: NullifierPIRClient!
+    var createPIRClientClosure: (() -> NullifierPIRClient)?
+
+    func createPIRClient() -> NullifierPIRClient {
+        createPIRClientCallsCount += 1
+        if let closure = createPIRClientClosure {
+            return closure()
+        } else {
+            return createPIRClientReturnValue
+        }
+    }
+
+    // MARK: - getPirParams
+
+    var getPirParamsThrowableError: Error?
+    var getPirParamsCallsCount = 0
+    var getPirParamsCalled: Bool {
+        return getPirParamsCallsCount > 0
+    }
+    var getPirParamsReturnValue: PirParamsResponse!
+    var getPirParamsClosure: (() async throws -> PirParamsResponse)?
+
+    func getPirParams() async throws -> PirParamsResponse {
+        if let error = getPirParamsThrowableError {
+            throw error
+        }
+        getPirParamsCallsCount += 1
+        if let closure = getPirParamsClosure {
+            return try await closure()
+        } else {
+            return getPirParamsReturnValue
+        }
+    }
+
 }
 class TransactionRepositoryMock: TransactionRepository {
 

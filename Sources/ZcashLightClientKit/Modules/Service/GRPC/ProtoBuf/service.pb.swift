@@ -25,17 +25,60 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
   typealias Version = _2
 }
 
-enum ShieldedProtocol: SwiftProtobuf.Enum, Swift.CaseIterable {
-  typealias RawValue = Int
+/// An identifier for a Zcash value pool.
+public enum PoolType: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public typealias RawValue = Int
+  case invalid // = 0
+  case transparent // = 1
+  case sapling // = 2
+  case orchard // = 3
+  case UNRECOGNIZED(Int)
+
+  public init() {
+    self = .invalid
+  }
+
+  public init?(rawValue: Int) {
+    switch rawValue {
+    case 0: self = .invalid
+    case 1: self = .transparent
+    case 2: self = .sapling
+    case 3: self = .orchard
+    default: self = .UNRECOGNIZED(rawValue)
+    }
+  }
+
+  public var rawValue: Int {
+    switch self {
+    case .invalid: return 0
+    case .transparent: return 1
+    case .sapling: return 2
+    case .orchard: return 3
+    case .UNRECOGNIZED(let i): return i
+    }
+  }
+
+  // The compiler won't synthesize support with the UNRECOGNIZED case.
+  public static let allCases: [PoolType] = [
+    .invalid,
+    .transparent,
+    .sapling,
+    .orchard,
+  ]
+
+}
+
+public enum ShieldedProtocol: SwiftProtobuf.Enum, Swift.CaseIterable {
+  public typealias RawValue = Int
   case sapling // = 0
   case orchard // = 1
   case UNRECOGNIZED(Int)
 
-  init() {
+  public init() {
     self = .sapling
   }
 
-  init?(rawValue: Int) {
+  public init?(rawValue: Int) {
     switch rawValue {
     case 0: self = .sapling
     case 1: self = .orchard
@@ -43,7 +86,7 @@ enum ShieldedProtocol: SwiftProtobuf.Enum, Swift.CaseIterable {
     }
   }
 
-  var rawValue: Int {
+  public var rawValue: Int {
     switch self {
     case .sapling: return 0
     case .orchard: return 1
@@ -52,7 +95,7 @@ enum ShieldedProtocol: SwiftProtobuf.Enum, Swift.CaseIterable {
   }
 
   // The compiler won't synthesize support with the UNRECOGNIZED case.
-  static let allCases: [ShieldedProtocol] = [
+  public static let allCases: [ShieldedProtocol] = [
     .sapling,
     .orchard,
   ]
@@ -61,48 +104,58 @@ enum ShieldedProtocol: SwiftProtobuf.Enum, Swift.CaseIterable {
 
 /// A BlockID message contains identifiers to select a block: a height or a
 /// hash. Specification by hash is not implemented, but may be in the future.
-struct BlockID: Sendable {
+public struct BlockID: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var height: UInt64 = 0
+  public var height: UInt64 = 0
 
-  var hash: Data = Data()
+  public var hash: Data = Data()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// BlockRange specifies a series of blocks from start to end inclusive.
 /// Both BlockIDs must be heights; specification by hash is not yet supported.
-struct BlockRange: Sendable {
+///
+/// If no pool types are specified, the server should default to the legacy
+/// behavior of returning only data relevant to the shielded (Sapling and
+/// Orchard) pools; otherwise, the server should prune `CompactBlocks` returned
+/// to include only data relevant to the requested pool types. Clients MUST 
+/// verify that the version of the server they are connected to are capable
+/// of returning pruned and/or transparent data before setting `poolTypes`
+/// to a non-empty value.
+public struct BlockRange: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var start: BlockID {
+  public var start: BlockID {
     get {return _start ?? BlockID()}
     set {_start = newValue}
   }
   /// Returns true if `start` has been explicitly set.
-  var hasStart: Bool {return self._start != nil}
+  public var hasStart: Bool {return self._start != nil}
   /// Clears the value of `start`. Subsequent reads from it will return its default value.
-  mutating func clearStart() {self._start = nil}
+  public mutating func clearStart() {self._start = nil}
 
-  var end: BlockID {
+  public var end: BlockID {
     get {return _end ?? BlockID()}
     set {_end = newValue}
   }
   /// Returns true if `end` has been explicitly set.
-  var hasEnd: Bool {return self._end != nil}
+  public var hasEnd: Bool {return self._end != nil}
   /// Clears the value of `end`. Subsequent reads from it will return its default value.
-  mutating func clearEnd() {self._end = nil}
+  public mutating func clearEnd() {self._end = nil}
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var poolTypes: [PoolType] = []
 
-  init() {}
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
 
   fileprivate var _start: BlockID? = nil
   fileprivate var _end: BlockID? = nil
@@ -111,163 +164,256 @@ struct BlockRange: Sendable {
 /// A TxFilter contains the information needed to identify a particular
 /// transaction: either a block and an index, or a direct transaction hash.
 /// Currently, only specification by hash is supported.
-struct TxFilter: Sendable {
+public struct TxFilter: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// block identifier, height or hash
-  var block: BlockID {
+  public var block: BlockID {
     get {return _block ?? BlockID()}
     set {_block = newValue}
   }
   /// Returns true if `block` has been explicitly set.
-  var hasBlock: Bool {return self._block != nil}
+  public var hasBlock: Bool {return self._block != nil}
   /// Clears the value of `block`. Subsequent reads from it will return its default value.
-  mutating func clearBlock() {self._block = nil}
+  public mutating func clearBlock() {self._block = nil}
 
   /// index within the block
-  var index: UInt64 = 0
+  public var index: UInt64 = 0
 
   /// transaction ID (hash, txid)
-  var hash: Data = Data()
+  public var hash: Data = Data()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 
   fileprivate var _block: BlockID? = nil
 }
 
-/// RawTransaction contains the complete transaction data. It also optionally includes 
+/// RawTransaction contains the complete transaction data. It also optionally includes
 /// the block height in which the transaction was included, or, when returned
 /// by GetMempoolStream(), the latest block height.
-struct RawTransaction: Sendable {
+///
+/// FIXME: the documentation here about mempool status contradicts the documentation
+/// for the `height` field. See https://github.com/zcash/librustzcash/issues/1484
+public struct RawTransaction: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// exact data returned by Zcash 'getrawtransaction'
-  var data: Data = Data()
+  /// The serialized representation of the Zcash transaction.
+  public var data: Data = Data()
 
-  /// height that the transaction was mined (or -1)
-  var height: UInt64 = 0
+  /// The height at which the transaction is mined, or a sentinel value.
+  ///
+  /// Due to an error in the original protobuf definition, it is necessary to
+  /// reinterpret the result of the `getrawtransaction` RPC call. Zcashd will
+  /// return the int64 value `-1` for the height of transactions that appear
+  /// in the block index, but which are not mined in the main chain. Here, the
+  /// height field of `RawTransaction` was erroneously created as a `uint64`,
+  /// and as such we must map the response from the zcashd RPC API to be
+  /// representable within this space. Additionally, the `height` field will
+  /// be absent for transactions in the mempool, resulting in the default
+  /// value of `0` being set. Therefore, the meanings of the `height` field of
+  /// the `RawTransaction` type are as follows:
+  ///
+  /// * height 0: the transaction is in the mempool
+  /// * height 0xffffffffffffffff: the transaction has been mined on a fork that
+  ///   is not currently the main chain
+  /// * any other height: the transaction has been mined in the main chain at the
+  ///   given height
+  public var height: UInt64 = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// A SendResponse encodes an error code and a string. It is currently used
 /// only by SendTransaction(). If error code is zero, the operation was
 /// successful; if non-zero, it and the message specify the failure.
-struct SendResponse: Sendable {
+public struct SendResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var errorCode: Int32 = 0
+  public var errorCode: Int32 = 0
 
-  var errorMessage: String = String()
+  public var errorMessage: String = String()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// Chainspec is a placeholder to allow specification of a particular chain fork.
-struct ChainSpec: Sendable {
+public struct ChainSpec: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// Empty is for gRPCs that take no arguments, currently only GetLightdInfo.
-struct Empty: Sendable {
+public struct Empty: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// LightdInfo returns various information about this lightwalletd instance
 /// and the state of the blockchain.
-struct LightdInfo: Sendable {
+public struct LightdInfo: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var version: String = String()
+  public var version: String {
+    get {return _storage._version}
+    set {_uniqueStorage()._version = newValue}
+  }
 
-  var vendor: String = String()
+  public var vendor: String {
+    get {return _storage._vendor}
+    set {_uniqueStorage()._vendor = newValue}
+  }
 
   /// true
-  var taddrSupport: Bool = false
+  public var taddrSupport: Bool {
+    get {return _storage._taddrSupport}
+    set {_uniqueStorage()._taddrSupport = newValue}
+  }
 
   /// either "main" or "test"
-  var chainName: String = String()
+  public var chainName: String {
+    get {return _storage._chainName}
+    set {_uniqueStorage()._chainName = newValue}
+  }
 
   /// depends on mainnet or testnet
-  var saplingActivationHeight: UInt64 = 0
+  public var saplingActivationHeight: UInt64 {
+    get {return _storage._saplingActivationHeight}
+    set {_uniqueStorage()._saplingActivationHeight = newValue}
+  }
 
   /// protocol identifier, see consensus/upgrades.cpp
-  var consensusBranchID: String = String()
+  public var consensusBranchID: String {
+    get {return _storage._consensusBranchID}
+    set {_uniqueStorage()._consensusBranchID = newValue}
+  }
 
   /// latest block on the best chain
-  var blockHeight: UInt64 = 0
+  public var blockHeight: UInt64 {
+    get {return _storage._blockHeight}
+    set {_uniqueStorage()._blockHeight = newValue}
+  }
 
-  var gitCommit: String = String()
+  public var gitCommit: String {
+    get {return _storage._gitCommit}
+    set {_uniqueStorage()._gitCommit = newValue}
+  }
 
-  var branch: String = String()
+  public var branch: String {
+    get {return _storage._branch}
+    set {_uniqueStorage()._branch = newValue}
+  }
 
-  var buildDate: String = String()
+  public var buildDate: String {
+    get {return _storage._buildDate}
+    set {_uniqueStorage()._buildDate = newValue}
+  }
 
-  var buildUser: String = String()
+  public var buildUser: String {
+    get {return _storage._buildUser}
+    set {_uniqueStorage()._buildUser = newValue}
+  }
 
   /// less than tip height if zcashd is syncing
-  var estimatedHeight: UInt64 = 0
+  public var estimatedHeight: UInt64 {
+    get {return _storage._estimatedHeight}
+    set {_uniqueStorage()._estimatedHeight = newValue}
+  }
 
   /// example: "v4.1.1-877212414"
-  var zcashdBuild: String = String()
+  public var zcashdBuild: String {
+    get {return _storage._zcashdBuild}
+    set {_uniqueStorage()._zcashdBuild = newValue}
+  }
 
   /// example: "/MagicBean:4.1.1/"
-  var zcashdSubversion: String = String()
+  public var zcashdSubversion: String {
+    get {return _storage._zcashdSubversion}
+    set {_uniqueStorage()._zcashdSubversion = newValue}
+  }
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  /// Zcash donation UA address
+  public var donationAddress: String {
+    get {return _storage._donationAddress}
+    set {_uniqueStorage()._donationAddress = newValue}
+  }
 
-  init() {}
+  /// name of next pending network upgrade, empty if none scheduled
+  public var upgradeName: String {
+    get {return _storage._upgradeName}
+    set {_uniqueStorage()._upgradeName = newValue}
+  }
+
+  /// height of next pending upgrade, zero if none is scheduled
+  public var upgradeHeight: UInt64 {
+    get {return _storage._upgradeHeight}
+    set {_uniqueStorage()._upgradeHeight = newValue}
+  }
+
+  /// version of https://github.com/zcash/lightwallet-protocol served by this server
+  public var lightwalletProtocolVersion: String {
+    get {return _storage._lightwalletProtocolVersion}
+    set {_uniqueStorage()._lightwalletProtocolVersion = newValue}
+  }
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _storage = _StorageClass.defaultInstance
 }
 
-/// TransparentAddressBlockFilter restricts the results to the given address
-/// or block range.
-struct TransparentAddressBlockFilter: Sendable {
+/// TransparentAddressBlockFilter restricts the results of the GRPC methods that
+/// use it to the transactions that involve the given address and were mined in
+/// the specified block range. Non-default values for both the address and the
+/// block range must be specified. Mempool transactions are not included.
+///
+/// The `poolTypes` field of the `range` argument should be ignored.
+/// Implementations MAY consider it an error if any pool types are specified.
+public struct TransparentAddressBlockFilter: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// t-address
-  var address: String = String()
+  public var address: String = String()
 
-  /// start, end heights
-  var range: BlockRange {
+  /// start, end heights only
+  public var range: BlockRange {
     get {return _range ?? BlockRange()}
     set {_range = newValue}
   }
   /// Returns true if `range` has been explicitly set.
-  var hasRange: Bool {return self._range != nil}
+  public var hasRange: Bool {return self._range != nil}
   /// Clears the value of `range`. Subsequent reads from it will return its default value.
-  mutating func clearRange() {self._range = nil}
+  public mutating func clearRange() {self._range = nil}
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 
   fileprivate var _range: BlockRange? = nil
 }
@@ -275,441 +421,478 @@ struct TransparentAddressBlockFilter: Sendable {
 /// Duration is currently used only for testing, so that the Ping rpc
 /// can simulate a delay, to create many simultaneous connections. Units
 /// are microseconds.
-struct Duration: Sendable {
+public struct Duration: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var intervalUs: Int64 = 0
+  public var intervalUs: Int64 = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// PingResponse is used to indicate concurrency, how many Ping rpcs
 /// are executing upon entry and upon exit (after the delay).
 /// This rpc is used for testing only.
-struct PingResponse: Sendable {
+public struct PingResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var entry: Int64 = 0
+  public var entry: Int64 = 0
 
-  var exit: Int64 = 0
+  public var exit: Int64 = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
-struct Address: Sendable {
+public struct Address: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var address: String = String()
+  public var address: String = String()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
-struct AddressList: Sendable {
+public struct AddressList: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var addresses: [String] = []
+  public var addresses: [String] = []
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
-struct Balance: Sendable {
+public struct Balance: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var valueZat: Int64 = 0
+  public var valueZat: Int64 = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
-struct Exclude: Sendable {
+/// Request parameters for the `GetMempoolTx` RPC.
+public struct GetMempoolTxRequest: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var txid: [Data] = []
+  /// A list of transaction ID byte string suffixes that should be excluded
+  /// from the response. These suffixes may be produced either directly from
+  /// the underlying txid bytes, or, if the source values are encoded txid
+  /// strings, by truncating the hexadecimal representation of each
+  /// transaction ID to an even number of characters, and then hex-decoding
+  /// and then byte-reversing this value to obtain the byte representation.
+  public var excludeTxidSuffixes: [Data] = []
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  /// The server must prune `CompactTx`s returned to include only data
+  /// relevant to the requested pool types. If no pool types are specified,
+  /// the server should default to the legacy behavior of returning only data
+  /// relevant to the shielded (Sapling and Orchard) pools.
+  public var poolTypes: [PoolType] = []
 
-  init() {}
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
 }
 
 /// The TreeState is derived from the Zcash z_gettreestate rpc.
-struct TreeState: Sendable {
+public struct TreeState: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// "main" or "test"
-  var network: String = String()
+  public var network: String = String()
 
   /// block height
-  var height: UInt64 = 0
+  public var height: UInt64 = 0
 
   /// block id
-  var hash: String = String()
+  public var hash: String = String()
 
   /// Unix epoch time when the block was mined
-  var time: UInt32 = 0
+  public var time: UInt32 = 0
 
   /// sapling commitment tree state
-  var saplingTree: String = String()
+  public var saplingTree: String = String()
 
   /// orchard commitment tree state
-  var orchardTree: String = String()
+  public var orchardTree: String = String()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
-struct GetSubtreeRootsArg: Sendable {
+public struct GetSubtreeRootsArg: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// Index identifying where to start returning subtree roots
-  var startIndex: UInt32 = 0
+  public var startIndex: UInt32 = 0
 
   /// Shielded protocol to return subtree roots for
-  var shieldedProtocol: ShieldedProtocol = .sapling
+  public var shieldedProtocol: ShieldedProtocol = .sapling
 
   /// Maximum number of entries to return, or 0 for all entries.
-  var maxEntries: UInt32 = 0
+  public var maxEntries: UInt32 = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
-struct SubtreeRoot: Sendable {
+public struct SubtreeRoot: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// The 32-byte Merkle root of the subtree.
-  var rootHash: Data = Data()
+  public var rootHash: Data = Data()
 
   /// The hash of the block that completed this subtree.
-  var completingBlockHash: Data = Data()
+  public var completingBlockHash: Data = Data()
 
   /// The height of the block that completed this subtree in the main chain.
-  var completingBlockHeight: UInt64 = 0
+  public var completingBlockHeight: UInt64 = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// Results are sorted by height, which makes it easy to issue another
 /// request that picks up from where the previous left off.
-struct GetAddressUtxosArg: Sendable {
+public struct GetAddressUtxosArg: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var addresses: [String] = []
+  public var addresses: [String] = []
 
-  var startHeight: UInt64 = 0
+  public var startHeight: UInt64 = 0
 
   /// zero means unlimited
-  var maxEntries: UInt32 = 0
+  public var maxEntries: UInt32 = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
-struct GetAddressUtxosReply: Sendable {
+public struct GetAddressUtxosReply: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var address: String = String()
+  public var address: String = String()
 
-  var txid: Data = Data()
+  public var txid: Data = Data()
 
-  var index: Int32 = 0
+  public var index: Int32 = 0
 
-  var script: Data = Data()
+  public var script: Data = Data()
 
-  var valueZat: Int64 = 0
+  public var valueZat: Int64 = 0
 
-  var height: UInt64 = 0
+  public var height: UInt64 = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
-struct GetAddressUtxosReplyList: Sendable {
+public struct GetAddressUtxosReplyList: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var addressUtxos: [GetAddressUtxosReply] = []
+  public var addressUtxos: [GetAddressUtxosReply] = []
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// Request for PIR parameters needed by clients to construct queries
-struct GetPirParamsRequest: Sendable {
+public struct GetPirParamsRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// Cuckoo hash table parameters
-struct CuckooParams: Sendable {
+public struct CuckooParams: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// Number of buckets in the Cuckoo table
-  var numBuckets: UInt64 = 0
+  public var numBuckets: UInt64 = 0
 
   /// Size of each bucket in bytes
-  var bucketSize: UInt32 = 0
+  public var bucketSize: UInt32 = 0
 
-  /// Seed for the hash functions (8 bytes, little-endian u64)
-  var hashSeed: Data = Data()
+  /// Seed for the hash functions
+  public var hashSeed: Data = Data()
 
-  /// Number of hash functions used (always 2)
-  var numHashFunctions: UInt32 = 0
+  /// Number of hash functions used
+  public var numHashFunctions: UInt32 = 0
 
-  /// Size of each entry in bytes
-  var entrySize: UInt32 = 0
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  /// Number of entries per bucket
-  var entriesPerBucket: UInt32 = 0
-
-  var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  init() {}
+  public init() {}
 }
 
-/// InsPIRe PIR setup parameters
-struct InspirePirSetup: Sendable {
+/// YPIR-specific parameters
+public struct YpirParams: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Polynomial length
-  var polyLen: UInt64 = 0
+  /// Number of rows in the PIR database
+  public var numRows: UInt64 = 0
 
-  /// First database dimension
-  var dbDim1: UInt64 = 0
+  /// Number of columns in the PIR database
+  public var numCols: UInt64 = 0
 
-  /// Number of instances
-  var instances: UInt64 = 0
+  /// Size of each element in bytes
+  public var elementSize: UInt64 = 0
 
-  /// Database rows
-  var dbRows: UInt64 = 0
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  /// Database columns
-  var dbCols: UInt64 = 0
+  public init() {}
+}
 
-  /// Gamma parameter
-  var gamma: UInt64 = 0
+/// InsPIRe-specific parameters (when available)
+public struct InspireParams: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
 
-  /// Interpolation degree
-  var interpolateDegree: UInt64 = 0
+  /// Number of rows
+  public var numRows: UInt64 = 0
 
-  /// Plaintext modulus
-  var ptModulus: UInt64 = 0
+  /// Number of columns
+  public var numCols: UInt64 = 0
 
-  /// C parameter
-  var c: UInt64 = 0
+  /// Element size
+  public var elementSize: UInt64 = 0
 
-  /// T_GSW parameter
-  var tGsw: UInt64 = 0
+  /// InsPIRe factor parameter
+  public var factor: UInt32 = 0
 
-  /// Q2 bits
-  var q2Bits: UInt64 = 0
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  /// T expansion left
-  var tExpLeft: UInt64 = 0
-
-  var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  init() {}
+  public init() {}
 }
 
 /// Response containing PIR parameters
-struct PirParamsResponse: @unchecked Sendable {
+public struct PirParamsResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Height below which clients should use PIR queries.
-  /// Above this height, clients should use trial decryption.
-  var pirCutoffHeight: UInt64 {
-    get {return _storage._pirCutoffHeight}
-    set {_uniqueStorage()._pirCutoffHeight = newValue}
-  }
+  /// Height below which clients should use PIR queries
+  /// Above this height, clients should use trial decryption (GetBlockRangeNullifiers)
+  public var pirCutoffHeight: UInt64 = 0
 
   /// Cuckoo hash table parameters for bucket index calculation
-  var cuckooParams: CuckooParams {
-    get {return _storage._cuckooParams ?? CuckooParams()}
-    set {_uniqueStorage()._cuckooParams = newValue}
+  public var cuckooParams: CuckooParams {
+    get {return _cuckooParams ?? CuckooParams()}
+    set {_cuckooParams = newValue}
   }
   /// Returns true if `cuckooParams` has been explicitly set.
-  var hasCuckooParams: Bool {return _storage._cuckooParams != nil}
+  public var hasCuckooParams: Bool {return self._cuckooParams != nil}
   /// Clears the value of `cuckooParams`. Subsequent reads from it will return its default value.
-  mutating func clearCuckooParams() {_uniqueStorage()._cuckooParams = nil}
+  public mutating func clearCuckooParams() {self._cuckooParams = nil}
 
-  /// InsPIRe setup parameters for query generation
-  var inspireSetup: InspirePirSetup {
-    get {return _storage._inspireSetup ?? InspirePirSetup()}
-    set {_uniqueStorage()._inspireSetup = newValue}
+  /// YPIR parameters (always available)
+  public var ypirParams: YpirParams {
+    get {return _ypirParams ?? YpirParams()}
+    set {_ypirParams = newValue}
   }
-  /// Returns true if `inspireSetup` has been explicitly set.
-  var hasInspireSetup: Bool {return _storage._inspireSetup != nil}
-  /// Clears the value of `inspireSetup`. Subsequent reads from it will return its default value.
-  mutating func clearInspireSetup() {_uniqueStorage()._inspireSetup = nil}
+  /// Returns true if `ypirParams` has been explicitly set.
+  public var hasYpirParams: Bool {return self._ypirParams != nil}
+  /// Clears the value of `ypirParams`. Subsequent reads from it will return its default value.
+  public mutating func clearYpirParams() {self._ypirParams = nil}
+
+  /// InsPIRe parameters (may be absent if not compiled with inspire feature)
+  public var inspireParams: InspireParams {
+    get {return _inspireParams ?? InspireParams()}
+    set {_inspireParams = newValue}
+  }
+  /// Returns true if `inspireParams` has been explicitly set.
+  public var hasInspireParams: Bool {return self._inspireParams != nil}
+  /// Clears the value of `inspireParams`. Subsequent reads from it will return its default value.
+  public mutating func clearInspireParams() {self._inspireParams = nil}
 
   /// Total number of nullifiers in the PIR database
-  var numNullifiers: UInt64 {
-    get {return _storage._numNullifiers}
-    set {_uniqueStorage()._numNullifiers = newValue}
-  }
+  public var numNullifiers: UInt64 = 0
 
   /// Whether the PIR service is ready to handle queries
-  var pirReady: Bool {
-    get {return _storage._pirReady}
-    set {_uniqueStorage()._pirReady = newValue}
-  }
+  public var pirReady: Bool = false
 
-  /// Record size in bytes (size of each bucket)
-  var recordSize: UInt64 {
-    get {return _storage._recordSize}
-    set {_uniqueStorage()._recordSize = newValue}
-  }
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  /// Factor (records per polynomial)
-  var factor: UInt64 {
-    get {return _storage._factor}
-    set {_uniqueStorage()._factor = newValue}
-  }
+  public init() {}
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  fileprivate var _cuckooParams: CuckooParams? = nil
+  fileprivate var _ypirParams: YpirParams? = nil
+  fileprivate var _inspireParams: InspireParams? = nil
+}
 
-  init() {}
+/// Request to execute a YPIR query
+public struct YpirQueryRequest: @unchecked Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
 
-  fileprivate var _storage = _StorageClass.defaultInstance
+  /// Serialized YPIR query
+  public var query: Data = Data()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from a YPIR query
+public struct YpirQueryResponse: @unchecked Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Serialized YPIR response
+  public var response: Data = Data()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
 }
 
 /// Request to execute an InsPIRe query
-struct InspireQueryRequest: Sendable {
+public struct InspireQueryRequest: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Serialized InsPIRe query (bincode-encoded)
-  var query: Data = Data()
+  /// Serialized InsPIRe query
+  public var query: Data = Data()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// Response from an InsPIRe query
-struct InspireQueryResponse: Sendable {
+public struct InspireQueryResponse: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Serialized InsPIRe response (JSON with base64 data)
-  var response: Data = Data()
+  /// Serialized InsPIRe response
+  public var response: Data = Data()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// Request for PIR service status
-struct GetPirStatusRequest: Sendable {
+public struct GetPirStatusRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 /// Response with PIR service status
-struct PirStatusResponse: Sendable {
+public struct PirStatusResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// Whether PIR service is available
-  var available: Bool = false
+  public var available: Bool = false
 
   /// Current status: "ready", "building", "unavailable"
-  var status: String = String()
+  public var status: String = String()
 
   /// Height of the current PIR database
-  var pirDbHeight: UInt64 = 0
+  public var pirDbHeight: UInt64 = 0
 
   /// Number of blocks pending processing
-  var pendingBlocks: UInt32 = 0
+  public var pendingBlocks: UInt32 = 0
 
   /// Total number of nullifiers in the database
-  var numNullifiers: UInt64 = 0
+  public var numNullifiers: UInt64 = 0
 
   /// Number of Cuckoo buckets
-  var numBuckets: UInt64 = 0
+  public var numBuckets: UInt64 = 0
 
   /// Whether a rebuild is currently in progress
-  var rebuildInProgress: Bool = false
+  public var rebuildInProgress: Bool = false
 
   /// Timestamp of the last successful database build (ISO 8601)
-  var lastBuildTime: String = String()
+  public var lastBuildTime: String = String()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 fileprivate let _protobuf_package = "cash.z.wallet.sdk.rpc"
 
+extension PoolType: SwiftProtobuf._ProtoNameProviding {
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    0: .same(proto: "POOL_TYPE_INVALID"),
+    1: .same(proto: "TRANSPARENT"),
+    2: .same(proto: "SAPLING"),
+    3: .same(proto: "ORCHARD"),
+  ]
+}
+
 extension ShieldedProtocol: SwiftProtobuf._ProtoNameProviding {
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0sapling\0\u{1}orchard\0")
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    0: .same(proto: "sapling"),
+    1: .same(proto: "orchard"),
+  ]
 }
 
 extension BlockID: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".BlockID"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}height\0\u{1}hash\0")
+  public static let protoMessageName: String = _protobuf_package + ".BlockID"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "height"),
+    2: .same(proto: "hash"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -722,7 +905,7 @@ extension BlockID: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBa
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.height != 0 {
       try visitor.visitSingularUInt64Field(value: self.height, fieldNumber: 1)
     }
@@ -732,7 +915,7 @@ extension BlockID: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBa
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: BlockID, rhs: BlockID) -> Bool {
+  public static func ==(lhs: BlockID, rhs: BlockID) -> Bool {
     if lhs.height != rhs.height {return false}
     if lhs.hash != rhs.hash {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -741,10 +924,14 @@ extension BlockID: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBa
 }
 
 extension BlockRange: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".BlockRange"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}start\0\u{1}end\0")
+  public static let protoMessageName: String = _protobuf_package + ".BlockRange"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "start"),
+    2: .same(proto: "end"),
+    3: .same(proto: "poolTypes"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -752,12 +939,13 @@ extension BlockRange: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementatio
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularMessageField(value: &self._start) }()
       case 2: try { try decoder.decodeSingularMessageField(value: &self._end) }()
+      case 3: try { try decoder.decodeRepeatedEnumField(value: &self.poolTypes) }()
       default: break
       }
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     // The use of inline closures is to circumvent an issue where the compiler
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
@@ -768,22 +956,30 @@ extension BlockRange: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementatio
     try { if let v = self._end {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
     } }()
+    if !self.poolTypes.isEmpty {
+      try visitor.visitPackedEnumField(value: self.poolTypes, fieldNumber: 3)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: BlockRange, rhs: BlockRange) -> Bool {
+  public static func ==(lhs: BlockRange, rhs: BlockRange) -> Bool {
     if lhs._start != rhs._start {return false}
     if lhs._end != rhs._end {return false}
+    if lhs.poolTypes != rhs.poolTypes {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
 extension TxFilter: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".TxFilter"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}block\0\u{1}index\0\u{1}hash\0")
+  public static let protoMessageName: String = _protobuf_package + ".TxFilter"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "block"),
+    2: .same(proto: "index"),
+    3: .same(proto: "hash"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -797,7 +993,7 @@ extension TxFilter: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationB
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     // The use of inline closures is to circumvent an issue where the compiler
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
@@ -814,7 +1010,7 @@ extension TxFilter: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationB
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: TxFilter, rhs: TxFilter) -> Bool {
+  public static func ==(lhs: TxFilter, rhs: TxFilter) -> Bool {
     if lhs._block != rhs._block {return false}
     if lhs.index != rhs.index {return false}
     if lhs.hash != rhs.hash {return false}
@@ -824,10 +1020,13 @@ extension TxFilter: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationB
 }
 
 extension RawTransaction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".RawTransaction"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}data\0\u{1}height\0")
+  public static let protoMessageName: String = _protobuf_package + ".RawTransaction"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "data"),
+    2: .same(proto: "height"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -840,7 +1039,7 @@ extension RawTransaction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplement
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.data.isEmpty {
       try visitor.visitSingularBytesField(value: self.data, fieldNumber: 1)
     }
@@ -850,7 +1049,7 @@ extension RawTransaction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplement
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: RawTransaction, rhs: RawTransaction) -> Bool {
+  public static func ==(lhs: RawTransaction, rhs: RawTransaction) -> Bool {
     if lhs.data != rhs.data {return false}
     if lhs.height != rhs.height {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -859,10 +1058,13 @@ extension RawTransaction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplement
 }
 
 extension SendResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".SendResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}errorCode\0\u{1}errorMessage\0")
+  public static let protoMessageName: String = _protobuf_package + ".SendResponse"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "errorCode"),
+    2: .same(proto: "errorMessage"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -875,7 +1077,7 @@ extension SendResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.errorCode != 0 {
       try visitor.visitSingularInt32Field(value: self.errorCode, fieldNumber: 1)
     }
@@ -885,7 +1087,7 @@ extension SendResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: SendResponse, rhs: SendResponse) -> Bool {
+  public static func ==(lhs: SendResponse, rhs: SendResponse) -> Bool {
     if lhs.errorCode != rhs.errorCode {return false}
     if lhs.errorMessage != rhs.errorMessage {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -894,143 +1096,259 @@ extension SendResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
 }
 
 extension ChainSpec: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".ChainSpec"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap()
+  public static let protoMessageName: String = _protobuf_package + ".ChainSpec"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap()
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     // Load everything into unknown fields
     while try decoder.nextFieldNumber() != nil {}
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: ChainSpec, rhs: ChainSpec) -> Bool {
+  public static func ==(lhs: ChainSpec, rhs: ChainSpec) -> Bool {
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
 extension Empty: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".Empty"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap()
+  public static let protoMessageName: String = _protobuf_package + ".Empty"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap()
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     // Load everything into unknown fields
     while try decoder.nextFieldNumber() != nil {}
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: Empty, rhs: Empty) -> Bool {
+  public static func ==(lhs: Empty, rhs: Empty) -> Bool {
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
 extension LightdInfo: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".LightdInfo"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}version\0\u{1}vendor\0\u{1}taddrSupport\0\u{1}chainName\0\u{1}saplingActivationHeight\0\u{1}consensusBranchId\0\u{1}blockHeight\0\u{1}gitCommit\0\u{1}branch\0\u{1}buildDate\0\u{1}buildUser\0\u{1}estimatedHeight\0\u{1}zcashdBuild\0\u{1}zcashdSubversion\0")
+  public static let protoMessageName: String = _protobuf_package + ".LightdInfo"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "version"),
+    2: .same(proto: "vendor"),
+    3: .same(proto: "taddrSupport"),
+    4: .same(proto: "chainName"),
+    5: .same(proto: "saplingActivationHeight"),
+    6: .same(proto: "consensusBranchId"),
+    7: .same(proto: "blockHeight"),
+    8: .same(proto: "gitCommit"),
+    9: .same(proto: "branch"),
+    10: .same(proto: "buildDate"),
+    11: .same(proto: "buildUser"),
+    12: .same(proto: "estimatedHeight"),
+    13: .same(proto: "zcashdBuild"),
+    14: .same(proto: "zcashdSubversion"),
+    15: .same(proto: "donationAddress"),
+    16: .same(proto: "upgradeName"),
+    17: .same(proto: "upgradeHeight"),
+    18: .same(proto: "lightwalletProtocolVersion"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.version) }()
-      case 2: try { try decoder.decodeSingularStringField(value: &self.vendor) }()
-      case 3: try { try decoder.decodeSingularBoolField(value: &self.taddrSupport) }()
-      case 4: try { try decoder.decodeSingularStringField(value: &self.chainName) }()
-      case 5: try { try decoder.decodeSingularUInt64Field(value: &self.saplingActivationHeight) }()
-      case 6: try { try decoder.decodeSingularStringField(value: &self.consensusBranchID) }()
-      case 7: try { try decoder.decodeSingularUInt64Field(value: &self.blockHeight) }()
-      case 8: try { try decoder.decodeSingularStringField(value: &self.gitCommit) }()
-      case 9: try { try decoder.decodeSingularStringField(value: &self.branch) }()
-      case 10: try { try decoder.decodeSingularStringField(value: &self.buildDate) }()
-      case 11: try { try decoder.decodeSingularStringField(value: &self.buildUser) }()
-      case 12: try { try decoder.decodeSingularUInt64Field(value: &self.estimatedHeight) }()
-      case 13: try { try decoder.decodeSingularStringField(value: &self.zcashdBuild) }()
-      case 14: try { try decoder.decodeSingularStringField(value: &self.zcashdSubversion) }()
-      default: break
+  fileprivate class _StorageClass {
+    var _version: String = String()
+    var _vendor: String = String()
+    var _taddrSupport: Bool = false
+    var _chainName: String = String()
+    var _saplingActivationHeight: UInt64 = 0
+    var _consensusBranchID: String = String()
+    var _blockHeight: UInt64 = 0
+    var _gitCommit: String = String()
+    var _branch: String = String()
+    var _buildDate: String = String()
+    var _buildUser: String = String()
+    var _estimatedHeight: UInt64 = 0
+    var _zcashdBuild: String = String()
+    var _zcashdSubversion: String = String()
+    var _donationAddress: String = String()
+    var _upgradeName: String = String()
+    var _upgradeHeight: UInt64 = 0
+    var _lightwalletProtocolVersion: String = String()
+
+    #if swift(>=5.10)
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+    #else
+      static let defaultInstance = _StorageClass()
+    #endif
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _version = source._version
+      _vendor = source._vendor
+      _taddrSupport = source._taddrSupport
+      _chainName = source._chainName
+      _saplingActivationHeight = source._saplingActivationHeight
+      _consensusBranchID = source._consensusBranchID
+      _blockHeight = source._blockHeight
+      _gitCommit = source._gitCommit
+      _branch = source._branch
+      _buildDate = source._buildDate
+      _buildUser = source._buildUser
+      _estimatedHeight = source._estimatedHeight
+      _zcashdBuild = source._zcashdBuild
+      _zcashdSubversion = source._zcashdSubversion
+      _donationAddress = source._donationAddress
+      _upgradeName = source._upgradeName
+      _upgradeHeight = source._upgradeHeight
+      _lightwalletProtocolVersion = source._lightwalletProtocolVersion
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularStringField(value: &_storage._version) }()
+        case 2: try { try decoder.decodeSingularStringField(value: &_storage._vendor) }()
+        case 3: try { try decoder.decodeSingularBoolField(value: &_storage._taddrSupport) }()
+        case 4: try { try decoder.decodeSingularStringField(value: &_storage._chainName) }()
+        case 5: try { try decoder.decodeSingularUInt64Field(value: &_storage._saplingActivationHeight) }()
+        case 6: try { try decoder.decodeSingularStringField(value: &_storage._consensusBranchID) }()
+        case 7: try { try decoder.decodeSingularUInt64Field(value: &_storage._blockHeight) }()
+        case 8: try { try decoder.decodeSingularStringField(value: &_storage._gitCommit) }()
+        case 9: try { try decoder.decodeSingularStringField(value: &_storage._branch) }()
+        case 10: try { try decoder.decodeSingularStringField(value: &_storage._buildDate) }()
+        case 11: try { try decoder.decodeSingularStringField(value: &_storage._buildUser) }()
+        case 12: try { try decoder.decodeSingularUInt64Field(value: &_storage._estimatedHeight) }()
+        case 13: try { try decoder.decodeSingularStringField(value: &_storage._zcashdBuild) }()
+        case 14: try { try decoder.decodeSingularStringField(value: &_storage._zcashdSubversion) }()
+        case 15: try { try decoder.decodeSingularStringField(value: &_storage._donationAddress) }()
+        case 16: try { try decoder.decodeSingularStringField(value: &_storage._upgradeName) }()
+        case 17: try { try decoder.decodeSingularUInt64Field(value: &_storage._upgradeHeight) }()
+        case 18: try { try decoder.decodeSingularStringField(value: &_storage._lightwalletProtocolVersion) }()
+        default: break
+        }
       }
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.version.isEmpty {
-      try visitor.visitSingularStringField(value: self.version, fieldNumber: 1)
-    }
-    if !self.vendor.isEmpty {
-      try visitor.visitSingularStringField(value: self.vendor, fieldNumber: 2)
-    }
-    if self.taddrSupport != false {
-      try visitor.visitSingularBoolField(value: self.taddrSupport, fieldNumber: 3)
-    }
-    if !self.chainName.isEmpty {
-      try visitor.visitSingularStringField(value: self.chainName, fieldNumber: 4)
-    }
-    if self.saplingActivationHeight != 0 {
-      try visitor.visitSingularUInt64Field(value: self.saplingActivationHeight, fieldNumber: 5)
-    }
-    if !self.consensusBranchID.isEmpty {
-      try visitor.visitSingularStringField(value: self.consensusBranchID, fieldNumber: 6)
-    }
-    if self.blockHeight != 0 {
-      try visitor.visitSingularUInt64Field(value: self.blockHeight, fieldNumber: 7)
-    }
-    if !self.gitCommit.isEmpty {
-      try visitor.visitSingularStringField(value: self.gitCommit, fieldNumber: 8)
-    }
-    if !self.branch.isEmpty {
-      try visitor.visitSingularStringField(value: self.branch, fieldNumber: 9)
-    }
-    if !self.buildDate.isEmpty {
-      try visitor.visitSingularStringField(value: self.buildDate, fieldNumber: 10)
-    }
-    if !self.buildUser.isEmpty {
-      try visitor.visitSingularStringField(value: self.buildUser, fieldNumber: 11)
-    }
-    if self.estimatedHeight != 0 {
-      try visitor.visitSingularUInt64Field(value: self.estimatedHeight, fieldNumber: 12)
-    }
-    if !self.zcashdBuild.isEmpty {
-      try visitor.visitSingularStringField(value: self.zcashdBuild, fieldNumber: 13)
-    }
-    if !self.zcashdSubversion.isEmpty {
-      try visitor.visitSingularStringField(value: self.zcashdSubversion, fieldNumber: 14)
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      if !_storage._version.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._version, fieldNumber: 1)
+      }
+      if !_storage._vendor.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._vendor, fieldNumber: 2)
+      }
+      if _storage._taddrSupport != false {
+        try visitor.visitSingularBoolField(value: _storage._taddrSupport, fieldNumber: 3)
+      }
+      if !_storage._chainName.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._chainName, fieldNumber: 4)
+      }
+      if _storage._saplingActivationHeight != 0 {
+        try visitor.visitSingularUInt64Field(value: _storage._saplingActivationHeight, fieldNumber: 5)
+      }
+      if !_storage._consensusBranchID.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._consensusBranchID, fieldNumber: 6)
+      }
+      if _storage._blockHeight != 0 {
+        try visitor.visitSingularUInt64Field(value: _storage._blockHeight, fieldNumber: 7)
+      }
+      if !_storage._gitCommit.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._gitCommit, fieldNumber: 8)
+      }
+      if !_storage._branch.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._branch, fieldNumber: 9)
+      }
+      if !_storage._buildDate.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._buildDate, fieldNumber: 10)
+      }
+      if !_storage._buildUser.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._buildUser, fieldNumber: 11)
+      }
+      if _storage._estimatedHeight != 0 {
+        try visitor.visitSingularUInt64Field(value: _storage._estimatedHeight, fieldNumber: 12)
+      }
+      if !_storage._zcashdBuild.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._zcashdBuild, fieldNumber: 13)
+      }
+      if !_storage._zcashdSubversion.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._zcashdSubversion, fieldNumber: 14)
+      }
+      if !_storage._donationAddress.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._donationAddress, fieldNumber: 15)
+      }
+      if !_storage._upgradeName.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._upgradeName, fieldNumber: 16)
+      }
+      if _storage._upgradeHeight != 0 {
+        try visitor.visitSingularUInt64Field(value: _storage._upgradeHeight, fieldNumber: 17)
+      }
+      if !_storage._lightwalletProtocolVersion.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._lightwalletProtocolVersion, fieldNumber: 18)
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: LightdInfo, rhs: LightdInfo) -> Bool {
-    if lhs.version != rhs.version {return false}
-    if lhs.vendor != rhs.vendor {return false}
-    if lhs.taddrSupport != rhs.taddrSupport {return false}
-    if lhs.chainName != rhs.chainName {return false}
-    if lhs.saplingActivationHeight != rhs.saplingActivationHeight {return false}
-    if lhs.consensusBranchID != rhs.consensusBranchID {return false}
-    if lhs.blockHeight != rhs.blockHeight {return false}
-    if lhs.gitCommit != rhs.gitCommit {return false}
-    if lhs.branch != rhs.branch {return false}
-    if lhs.buildDate != rhs.buildDate {return false}
-    if lhs.buildUser != rhs.buildUser {return false}
-    if lhs.estimatedHeight != rhs.estimatedHeight {return false}
-    if lhs.zcashdBuild != rhs.zcashdBuild {return false}
-    if lhs.zcashdSubversion != rhs.zcashdSubversion {return false}
+  public static func ==(lhs: LightdInfo, rhs: LightdInfo) -> Bool {
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._version != rhs_storage._version {return false}
+        if _storage._vendor != rhs_storage._vendor {return false}
+        if _storage._taddrSupport != rhs_storage._taddrSupport {return false}
+        if _storage._chainName != rhs_storage._chainName {return false}
+        if _storage._saplingActivationHeight != rhs_storage._saplingActivationHeight {return false}
+        if _storage._consensusBranchID != rhs_storage._consensusBranchID {return false}
+        if _storage._blockHeight != rhs_storage._blockHeight {return false}
+        if _storage._gitCommit != rhs_storage._gitCommit {return false}
+        if _storage._branch != rhs_storage._branch {return false}
+        if _storage._buildDate != rhs_storage._buildDate {return false}
+        if _storage._buildUser != rhs_storage._buildUser {return false}
+        if _storage._estimatedHeight != rhs_storage._estimatedHeight {return false}
+        if _storage._zcashdBuild != rhs_storage._zcashdBuild {return false}
+        if _storage._zcashdSubversion != rhs_storage._zcashdSubversion {return false}
+        if _storage._donationAddress != rhs_storage._donationAddress {return false}
+        if _storage._upgradeName != rhs_storage._upgradeName {return false}
+        if _storage._upgradeHeight != rhs_storage._upgradeHeight {return false}
+        if _storage._lightwalletProtocolVersion != rhs_storage._lightwalletProtocolVersion {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
 extension TransparentAddressBlockFilter: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".TransparentAddressBlockFilter"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}address\0\u{1}range\0")
+  public static let protoMessageName: String = _protobuf_package + ".TransparentAddressBlockFilter"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "address"),
+    2: .same(proto: "range"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -1043,7 +1361,7 @@ extension TransparentAddressBlockFilter: SwiftProtobuf.Message, SwiftProtobuf._M
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     // The use of inline closures is to circumvent an issue where the compiler
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
@@ -1057,7 +1375,7 @@ extension TransparentAddressBlockFilter: SwiftProtobuf.Message, SwiftProtobuf._M
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: TransparentAddressBlockFilter, rhs: TransparentAddressBlockFilter) -> Bool {
+  public static func ==(lhs: TransparentAddressBlockFilter, rhs: TransparentAddressBlockFilter) -> Bool {
     if lhs.address != rhs.address {return false}
     if lhs._range != rhs._range {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -1066,10 +1384,12 @@ extension TransparentAddressBlockFilter: SwiftProtobuf.Message, SwiftProtobuf._M
 }
 
 extension Duration: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".Duration"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}intervalUs\0")
+  public static let protoMessageName: String = _protobuf_package + ".Duration"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "intervalUs"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -1081,14 +1401,14 @@ extension Duration: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationB
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.intervalUs != 0 {
       try visitor.visitSingularInt64Field(value: self.intervalUs, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: Duration, rhs: Duration) -> Bool {
+  public static func ==(lhs: Duration, rhs: Duration) -> Bool {
     if lhs.intervalUs != rhs.intervalUs {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -1096,10 +1416,13 @@ extension Duration: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationB
 }
 
 extension PingResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".PingResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}entry\0\u{1}exit\0")
+  public static let protoMessageName: String = _protobuf_package + ".PingResponse"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "entry"),
+    2: .same(proto: "exit"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -1112,7 +1435,7 @@ extension PingResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.entry != 0 {
       try visitor.visitSingularInt64Field(value: self.entry, fieldNumber: 1)
     }
@@ -1122,7 +1445,7 @@ extension PingResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: PingResponse, rhs: PingResponse) -> Bool {
+  public static func ==(lhs: PingResponse, rhs: PingResponse) -> Bool {
     if lhs.entry != rhs.entry {return false}
     if lhs.exit != rhs.exit {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -1131,10 +1454,12 @@ extension PingResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
 }
 
 extension Address: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".Address"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}address\0")
+  public static let protoMessageName: String = _protobuf_package + ".Address"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "address"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -1146,14 +1471,14 @@ extension Address: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBa
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.address.isEmpty {
       try visitor.visitSingularStringField(value: self.address, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: Address, rhs: Address) -> Bool {
+  public static func ==(lhs: Address, rhs: Address) -> Bool {
     if lhs.address != rhs.address {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -1161,10 +1486,12 @@ extension Address: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBa
 }
 
 extension AddressList: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".AddressList"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}addresses\0")
+  public static let protoMessageName: String = _protobuf_package + ".AddressList"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "addresses"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -1176,14 +1503,14 @@ extension AddressList: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementati
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.addresses.isEmpty {
       try visitor.visitRepeatedStringField(value: self.addresses, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: AddressList, rhs: AddressList) -> Bool {
+  public static func ==(lhs: AddressList, rhs: AddressList) -> Bool {
     if lhs.addresses != rhs.addresses {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -1191,10 +1518,12 @@ extension AddressList: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementati
 }
 
 extension Balance: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".Balance"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}valueZat\0")
+  public static let protoMessageName: String = _protobuf_package + ".Balance"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "valueZat"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -1206,55 +1535,70 @@ extension Balance: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBa
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.valueZat != 0 {
       try visitor.visitSingularInt64Field(value: self.valueZat, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: Balance, rhs: Balance) -> Bool {
+  public static func ==(lhs: Balance, rhs: Balance) -> Bool {
     if lhs.valueZat != rhs.valueZat {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-extension Exclude: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".Exclude"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}txid\0")
+extension GetMempoolTxRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GetMempoolTxRequest"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .standard(proto: "exclude_txid_suffixes"),
+    3: .same(proto: "poolTypes"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeRepeatedBytesField(value: &self.txid) }()
+      case 1: try { try decoder.decodeRepeatedBytesField(value: &self.excludeTxidSuffixes) }()
+      case 3: try { try decoder.decodeRepeatedEnumField(value: &self.poolTypes) }()
       default: break
       }
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.txid.isEmpty {
-      try visitor.visitRepeatedBytesField(value: self.txid, fieldNumber: 1)
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.excludeTxidSuffixes.isEmpty {
+      try visitor.visitRepeatedBytesField(value: self.excludeTxidSuffixes, fieldNumber: 1)
+    }
+    if !self.poolTypes.isEmpty {
+      try visitor.visitPackedEnumField(value: self.poolTypes, fieldNumber: 3)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: Exclude, rhs: Exclude) -> Bool {
-    if lhs.txid != rhs.txid {return false}
+  public static func ==(lhs: GetMempoolTxRequest, rhs: GetMempoolTxRequest) -> Bool {
+    if lhs.excludeTxidSuffixes != rhs.excludeTxidSuffixes {return false}
+    if lhs.poolTypes != rhs.poolTypes {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
 extension TreeState: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".TreeState"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}network\0\u{1}height\0\u{1}hash\0\u{1}time\0\u{1}saplingTree\0\u{1}orchardTree\0")
+  public static let protoMessageName: String = _protobuf_package + ".TreeState"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "network"),
+    2: .same(proto: "height"),
+    3: .same(proto: "hash"),
+    4: .same(proto: "time"),
+    5: .same(proto: "saplingTree"),
+    6: .same(proto: "orchardTree"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -1271,7 +1615,7 @@ extension TreeState: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementation
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.network.isEmpty {
       try visitor.visitSingularStringField(value: self.network, fieldNumber: 1)
     }
@@ -1293,7 +1637,7 @@ extension TreeState: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementation
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: TreeState, rhs: TreeState) -> Bool {
+  public static func ==(lhs: TreeState, rhs: TreeState) -> Bool {
     if lhs.network != rhs.network {return false}
     if lhs.height != rhs.height {return false}
     if lhs.hash != rhs.hash {return false}
@@ -1306,10 +1650,14 @@ extension TreeState: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementation
 }
 
 extension GetSubtreeRootsArg: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".GetSubtreeRootsArg"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}startIndex\0\u{1}shieldedProtocol\0\u{1}maxEntries\0")
+  public static let protoMessageName: String = _protobuf_package + ".GetSubtreeRootsArg"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "startIndex"),
+    2: .same(proto: "shieldedProtocol"),
+    3: .same(proto: "maxEntries"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -1323,7 +1671,7 @@ extension GetSubtreeRootsArg: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.startIndex != 0 {
       try visitor.visitSingularUInt32Field(value: self.startIndex, fieldNumber: 1)
     }
@@ -1336,7 +1684,7 @@ extension GetSubtreeRootsArg: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: GetSubtreeRootsArg, rhs: GetSubtreeRootsArg) -> Bool {
+  public static func ==(lhs: GetSubtreeRootsArg, rhs: GetSubtreeRootsArg) -> Bool {
     if lhs.startIndex != rhs.startIndex {return false}
     if lhs.shieldedProtocol != rhs.shieldedProtocol {return false}
     if lhs.maxEntries != rhs.maxEntries {return false}
@@ -1346,10 +1694,14 @@ extension GetSubtreeRootsArg: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
 }
 
 extension SubtreeRoot: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".SubtreeRoot"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\u{2}rootHash\0\u{1}completingBlockHash\0\u{1}completingBlockHeight\0")
+  public static let protoMessageName: String = _protobuf_package + ".SubtreeRoot"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    2: .same(proto: "rootHash"),
+    3: .same(proto: "completingBlockHash"),
+    4: .same(proto: "completingBlockHeight"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -1363,7 +1715,7 @@ extension SubtreeRoot: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementati
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.rootHash.isEmpty {
       try visitor.visitSingularBytesField(value: self.rootHash, fieldNumber: 2)
     }
@@ -1376,7 +1728,7 @@ extension SubtreeRoot: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementati
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: SubtreeRoot, rhs: SubtreeRoot) -> Bool {
+  public static func ==(lhs: SubtreeRoot, rhs: SubtreeRoot) -> Bool {
     if lhs.rootHash != rhs.rootHash {return false}
     if lhs.completingBlockHash != rhs.completingBlockHash {return false}
     if lhs.completingBlockHeight != rhs.completingBlockHeight {return false}
@@ -1386,10 +1738,14 @@ extension SubtreeRoot: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementati
 }
 
 extension GetAddressUtxosArg: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".GetAddressUtxosArg"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}addresses\0\u{1}startHeight\0\u{1}maxEntries\0")
+  public static let protoMessageName: String = _protobuf_package + ".GetAddressUtxosArg"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "addresses"),
+    2: .same(proto: "startHeight"),
+    3: .same(proto: "maxEntries"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -1403,7 +1759,7 @@ extension GetAddressUtxosArg: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.addresses.isEmpty {
       try visitor.visitRepeatedStringField(value: self.addresses, fieldNumber: 1)
     }
@@ -1416,7 +1772,7 @@ extension GetAddressUtxosArg: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: GetAddressUtxosArg, rhs: GetAddressUtxosArg) -> Bool {
+  public static func ==(lhs: GetAddressUtxosArg, rhs: GetAddressUtxosArg) -> Bool {
     if lhs.addresses != rhs.addresses {return false}
     if lhs.startHeight != rhs.startHeight {return false}
     if lhs.maxEntries != rhs.maxEntries {return false}
@@ -1426,10 +1782,17 @@ extension GetAddressUtxosArg: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
 }
 
 extension GetAddressUtxosReply: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".GetAddressUtxosReply"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}txid\0\u{1}index\0\u{1}script\0\u{1}valueZat\0\u{1}height\0\u{1}address\0")
+  public static let protoMessageName: String = _protobuf_package + ".GetAddressUtxosReply"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    6: .same(proto: "address"),
+    1: .same(proto: "txid"),
+    2: .same(proto: "index"),
+    3: .same(proto: "script"),
+    4: .same(proto: "valueZat"),
+    5: .same(proto: "height"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -1446,7 +1809,7 @@ extension GetAddressUtxosReply: SwiftProtobuf.Message, SwiftProtobuf._MessageImp
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.txid.isEmpty {
       try visitor.visitSingularBytesField(value: self.txid, fieldNumber: 1)
     }
@@ -1468,7 +1831,7 @@ extension GetAddressUtxosReply: SwiftProtobuf.Message, SwiftProtobuf._MessageImp
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: GetAddressUtxosReply, rhs: GetAddressUtxosReply) -> Bool {
+  public static func ==(lhs: GetAddressUtxosReply, rhs: GetAddressUtxosReply) -> Bool {
     if lhs.address != rhs.address {return false}
     if lhs.txid != rhs.txid {return false}
     if lhs.index != rhs.index {return false}
@@ -1481,10 +1844,12 @@ extension GetAddressUtxosReply: SwiftProtobuf.Message, SwiftProtobuf._MessageImp
 }
 
 extension GetAddressUtxosReplyList: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".GetAddressUtxosReplyList"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}addressUtxos\0")
+  public static let protoMessageName: String = _protobuf_package + ".GetAddressUtxosReplyList"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "addressUtxos"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -1496,14 +1861,14 @@ extension GetAddressUtxosReplyList: SwiftProtobuf.Message, SwiftProtobuf._Messag
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.addressUtxos.isEmpty {
       try visitor.visitRepeatedMessageField(value: self.addressUtxos, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: GetAddressUtxosReplyList, rhs: GetAddressUtxosReplyList) -> Bool {
+  public static func ==(lhs: GetAddressUtxosReplyList, rhs: GetAddressUtxosReplyList) -> Bool {
     if lhs.addressUtxos != rhs.addressUtxos {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -1511,29 +1876,34 @@ extension GetAddressUtxosReplyList: SwiftProtobuf.Message, SwiftProtobuf._Messag
 }
 
 extension GetPirParamsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".GetPirParamsRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap()
+  public static let protoMessageName: String = _protobuf_package + ".GetPirParamsRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap()
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     // Load everything into unknown fields
     while try decoder.nextFieldNumber() != nil {}
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: GetPirParamsRequest, rhs: GetPirParamsRequest) -> Bool {
+  public static func ==(lhs: GetPirParamsRequest, rhs: GetPirParamsRequest) -> Bool {
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
 extension CuckooParams: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".CuckooParams"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}numBuckets\0\u{1}bucketSize\0\u{1}hashSeed\0\u{1}numHashFunctions\0\u{1}entrySize\0\u{1}entriesPerBucket\0")
+  public static let protoMessageName: String = _protobuf_package + ".CuckooParams"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "numBuckets"),
+    2: .same(proto: "bucketSize"),
+    3: .same(proto: "hashSeed"),
+    4: .same(proto: "numHashFunctions"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -1543,14 +1913,12 @@ extension CuckooParams: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
       case 2: try { try decoder.decodeSingularUInt32Field(value: &self.bucketSize) }()
       case 3: try { try decoder.decodeSingularBytesField(value: &self.hashSeed) }()
       case 4: try { try decoder.decodeSingularUInt32Field(value: &self.numHashFunctions) }()
-      case 5: try { try decoder.decodeSingularUInt32Field(value: &self.entrySize) }()
-      case 6: try { try decoder.decodeSingularUInt32Field(value: &self.entriesPerBucket) }()
       default: break
       }
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.numBuckets != 0 {
       try visitor.visitSingularUInt64Field(value: self.numBuckets, fieldNumber: 1)
     }
@@ -1563,229 +1931,186 @@ extension CuckooParams: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
     if self.numHashFunctions != 0 {
       try visitor.visitSingularUInt32Field(value: self.numHashFunctions, fieldNumber: 4)
     }
-    if self.entrySize != 0 {
-      try visitor.visitSingularUInt32Field(value: self.entrySize, fieldNumber: 5)
-    }
-    if self.entriesPerBucket != 0 {
-      try visitor.visitSingularUInt32Field(value: self.entriesPerBucket, fieldNumber: 6)
-    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: CuckooParams, rhs: CuckooParams) -> Bool {
+  public static func ==(lhs: CuckooParams, rhs: CuckooParams) -> Bool {
     if lhs.numBuckets != rhs.numBuckets {return false}
     if lhs.bucketSize != rhs.bucketSize {return false}
     if lhs.hashSeed != rhs.hashSeed {return false}
     if lhs.numHashFunctions != rhs.numHashFunctions {return false}
-    if lhs.entrySize != rhs.entrySize {return false}
-    if lhs.entriesPerBucket != rhs.entriesPerBucket {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-extension InspirePirSetup: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".InspirePirSetup"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}polyLen\0\u{1}dbDim1\0\u{1}instances\0\u{1}dbRows\0\u{1}dbCols\0\u{1}gamma\0\u{1}interpolateDegree\0\u{1}ptModulus\0\u{1}c\0\u{1}tGsw\0\u{1}q2Bits\0\u{1}tExpLeft\0")
+extension YpirParams: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".YpirParams"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "numRows"),
+    2: .same(proto: "numCols"),
+    3: .same(proto: "elementSize"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularUInt64Field(value: &self.polyLen) }()
-      case 2: try { try decoder.decodeSingularUInt64Field(value: &self.dbDim1) }()
-      case 3: try { try decoder.decodeSingularUInt64Field(value: &self.instances) }()
-      case 4: try { try decoder.decodeSingularUInt64Field(value: &self.dbRows) }()
-      case 5: try { try decoder.decodeSingularUInt64Field(value: &self.dbCols) }()
-      case 6: try { try decoder.decodeSingularUInt64Field(value: &self.gamma) }()
-      case 7: try { try decoder.decodeSingularUInt64Field(value: &self.interpolateDegree) }()
-      case 8: try { try decoder.decodeSingularUInt64Field(value: &self.ptModulus) }()
-      case 9: try { try decoder.decodeSingularUInt64Field(value: &self.c) }()
-      case 10: try { try decoder.decodeSingularUInt64Field(value: &self.tGsw) }()
-      case 11: try { try decoder.decodeSingularUInt64Field(value: &self.q2Bits) }()
-      case 12: try { try decoder.decodeSingularUInt64Field(value: &self.tExpLeft) }()
+      case 1: try { try decoder.decodeSingularUInt64Field(value: &self.numRows) }()
+      case 2: try { try decoder.decodeSingularUInt64Field(value: &self.numCols) }()
+      case 3: try { try decoder.decodeSingularUInt64Field(value: &self.elementSize) }()
       default: break
       }
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.polyLen != 0 {
-      try visitor.visitSingularUInt64Field(value: self.polyLen, fieldNumber: 1)
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.numRows != 0 {
+      try visitor.visitSingularUInt64Field(value: self.numRows, fieldNumber: 1)
     }
-    if self.dbDim1 != 0 {
-      try visitor.visitSingularUInt64Field(value: self.dbDim1, fieldNumber: 2)
+    if self.numCols != 0 {
+      try visitor.visitSingularUInt64Field(value: self.numCols, fieldNumber: 2)
     }
-    if self.instances != 0 {
-      try visitor.visitSingularUInt64Field(value: self.instances, fieldNumber: 3)
-    }
-    if self.dbRows != 0 {
-      try visitor.visitSingularUInt64Field(value: self.dbRows, fieldNumber: 4)
-    }
-    if self.dbCols != 0 {
-      try visitor.visitSingularUInt64Field(value: self.dbCols, fieldNumber: 5)
-    }
-    if self.gamma != 0 {
-      try visitor.visitSingularUInt64Field(value: self.gamma, fieldNumber: 6)
-    }
-    if self.interpolateDegree != 0 {
-      try visitor.visitSingularUInt64Field(value: self.interpolateDegree, fieldNumber: 7)
-    }
-    if self.ptModulus != 0 {
-      try visitor.visitSingularUInt64Field(value: self.ptModulus, fieldNumber: 8)
-    }
-    if self.c != 0 {
-      try visitor.visitSingularUInt64Field(value: self.c, fieldNumber: 9)
-    }
-    if self.tGsw != 0 {
-      try visitor.visitSingularUInt64Field(value: self.tGsw, fieldNumber: 10)
-    }
-    if self.q2Bits != 0 {
-      try visitor.visitSingularUInt64Field(value: self.q2Bits, fieldNumber: 11)
-    }
-    if self.tExpLeft != 0 {
-      try visitor.visitSingularUInt64Field(value: self.tExpLeft, fieldNumber: 12)
+    if self.elementSize != 0 {
+      try visitor.visitSingularUInt64Field(value: self.elementSize, fieldNumber: 3)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: InspirePirSetup, rhs: InspirePirSetup) -> Bool {
-    if lhs.polyLen != rhs.polyLen {return false}
-    if lhs.dbDim1 != rhs.dbDim1 {return false}
-    if lhs.instances != rhs.instances {return false}
-    if lhs.dbRows != rhs.dbRows {return false}
-    if lhs.dbCols != rhs.dbCols {return false}
-    if lhs.gamma != rhs.gamma {return false}
-    if lhs.interpolateDegree != rhs.interpolateDegree {return false}
-    if lhs.ptModulus != rhs.ptModulus {return false}
-    if lhs.c != rhs.c {return false}
-    if lhs.tGsw != rhs.tGsw {return false}
-    if lhs.q2Bits != rhs.q2Bits {return false}
-    if lhs.tExpLeft != rhs.tExpLeft {return false}
+  public static func ==(lhs: YpirParams, rhs: YpirParams) -> Bool {
+    if lhs.numRows != rhs.numRows {return false}
+    if lhs.numCols != rhs.numCols {return false}
+    if lhs.elementSize != rhs.elementSize {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension InspireParams: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".InspireParams"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "numRows"),
+    2: .same(proto: "numCols"),
+    3: .same(proto: "elementSize"),
+    4: .same(proto: "factor"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularUInt64Field(value: &self.numRows) }()
+      case 2: try { try decoder.decodeSingularUInt64Field(value: &self.numCols) }()
+      case 3: try { try decoder.decodeSingularUInt64Field(value: &self.elementSize) }()
+      case 4: try { try decoder.decodeSingularUInt32Field(value: &self.factor) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.numRows != 0 {
+      try visitor.visitSingularUInt64Field(value: self.numRows, fieldNumber: 1)
+    }
+    if self.numCols != 0 {
+      try visitor.visitSingularUInt64Field(value: self.numCols, fieldNumber: 2)
+    }
+    if self.elementSize != 0 {
+      try visitor.visitSingularUInt64Field(value: self.elementSize, fieldNumber: 3)
+    }
+    if self.factor != 0 {
+      try visitor.visitSingularUInt32Field(value: self.factor, fieldNumber: 4)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: InspireParams, rhs: InspireParams) -> Bool {
+    if lhs.numRows != rhs.numRows {return false}
+    if lhs.numCols != rhs.numCols {return false}
+    if lhs.elementSize != rhs.elementSize {return false}
+    if lhs.factor != rhs.factor {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
 extension PirParamsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".PirParamsResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}pirCutoffHeight\0\u{1}cuckooParams\0\u{1}inspireSetup\0\u{1}numNullifiers\0\u{1}pirReady\0\u{1}recordSize\0\u{1}factor\0")
+  public static let protoMessageName: String = _protobuf_package + ".PirParamsResponse"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "pirCutoffHeight"),
+    2: .same(proto: "cuckooParams"),
+    3: .same(proto: "ypirParams"),
+    4: .same(proto: "inspireParams"),
+    5: .same(proto: "numNullifiers"),
+    6: .same(proto: "pirReady"),
+  ]
 
-  fileprivate class _StorageClass {
-    var _pirCutoffHeight: UInt64 = 0
-    var _cuckooParams: CuckooParams? = nil
-    var _inspireSetup: InspirePirSetup? = nil
-    var _numNullifiers: UInt64 = 0
-    var _pirReady: Bool = false
-    var _recordSize: UInt64 = 0
-    var _factor: UInt64 = 0
-
-      // This property is used as the initial default value for new instances of the type.
-      // The type itself is protecting the reference to its storage via CoW semantics.
-      // This will force a copy to be made of this reference when the first mutation occurs;
-      // hence, it is safe to mark this as `nonisolated(unsafe)`.
-      static nonisolated(unsafe) let defaultInstance = _StorageClass()
-
-    private init() {}
-
-    init(copying source: _StorageClass) {
-      _pirCutoffHeight = source._pirCutoffHeight
-      _cuckooParams = source._cuckooParams
-      _inspireSetup = source._inspireSetup
-      _numNullifiers = source._numNullifiers
-      _pirReady = source._pirReady
-      _recordSize = source._recordSize
-      _factor = source._factor
-    }
-  }
-
-  fileprivate mutating func _uniqueStorage() -> _StorageClass {
-    if !isKnownUniquelyReferenced(&_storage) {
-      _storage = _StorageClass(copying: _storage)
-    }
-    return _storage
-  }
-
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    _ = _uniqueStorage()
-    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
-      while let fieldNumber = try decoder.nextFieldNumber() {
-        // The use of inline closures is to circumvent an issue where the compiler
-        // allocates stack space for every case branch when no optimizations are
-        // enabled. https://github.com/apple/swift-protobuf/issues/1034
-        switch fieldNumber {
-        case 1: try { try decoder.decodeSingularUInt64Field(value: &_storage._pirCutoffHeight) }()
-        case 2: try { try decoder.decodeSingularMessageField(value: &_storage._cuckooParams) }()
-        case 3: try { try decoder.decodeSingularMessageField(value: &_storage._inspireSetup) }()
-        case 4: try { try decoder.decodeSingularUInt64Field(value: &_storage._numNullifiers) }()
-        case 5: try { try decoder.decodeSingularBoolField(value: &_storage._pirReady) }()
-        case 6: try { try decoder.decodeSingularUInt64Field(value: &_storage._recordSize) }()
-        case 7: try { try decoder.decodeSingularUInt64Field(value: &_storage._factor) }()
-        default: break
-        }
-      }
-    }
-  }
-
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every if/case branch local when no optimizations
-      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-      // https://github.com/apple/swift-protobuf/issues/1182
-      if _storage._pirCutoffHeight != 0 {
-        try visitor.visitSingularUInt64Field(value: _storage._pirCutoffHeight, fieldNumber: 1)
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularUInt64Field(value: &self.pirCutoffHeight) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._cuckooParams) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._ypirParams) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._inspireParams) }()
+      case 5: try { try decoder.decodeSingularUInt64Field(value: &self.numNullifiers) }()
+      case 6: try { try decoder.decodeSingularBoolField(value: &self.pirReady) }()
+      default: break
       }
-      try { if let v = _storage._cuckooParams {
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-      } }()
-      try { if let v = _storage._inspireSetup {
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
-      } }()
-      if _storage._numNullifiers != 0 {
-        try visitor.visitSingularUInt64Field(value: _storage._numNullifiers, fieldNumber: 4)
-      }
-      if _storage._pirReady != false {
-        try visitor.visitSingularBoolField(value: _storage._pirReady, fieldNumber: 5)
-      }
-      if _storage._recordSize != 0 {
-        try visitor.visitSingularUInt64Field(value: _storage._recordSize, fieldNumber: 6)
-      }
-      if _storage._factor != 0 {
-        try visitor.visitSingularUInt64Field(value: _storage._factor, fieldNumber: 7)
-      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if self.pirCutoffHeight != 0 {
+      try visitor.visitSingularUInt64Field(value: self.pirCutoffHeight, fieldNumber: 1)
+    }
+    try { if let v = self._cuckooParams {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    try { if let v = self._ypirParams {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    } }()
+    try { if let v = self._inspireParams {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
+    if self.numNullifiers != 0 {
+      try visitor.visitSingularUInt64Field(value: self.numNullifiers, fieldNumber: 5)
+    }
+    if self.pirReady != false {
+      try visitor.visitSingularBoolField(value: self.pirReady, fieldNumber: 6)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: PirParamsResponse, rhs: PirParamsResponse) -> Bool {
-    if lhs._storage !== rhs._storage {
-      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
-        let _storage = _args.0
-        let rhs_storage = _args.1
-        if _storage._pirCutoffHeight != rhs_storage._pirCutoffHeight {return false}
-        if _storage._cuckooParams != rhs_storage._cuckooParams {return false}
-        if _storage._inspireSetup != rhs_storage._inspireSetup {return false}
-        if _storage._numNullifiers != rhs_storage._numNullifiers {return false}
-        if _storage._pirReady != rhs_storage._pirReady {return false}
-        if _storage._recordSize != rhs_storage._recordSize {return false}
-        if _storage._factor != rhs_storage._factor {return false}
-        return true
-      }
-      if !storagesAreEqual {return false}
-    }
+  public static func ==(lhs: PirParamsResponse, rhs: PirParamsResponse) -> Bool {
+    if lhs.pirCutoffHeight != rhs.pirCutoffHeight {return false}
+    if lhs._cuckooParams != rhs._cuckooParams {return false}
+    if lhs._ypirParams != rhs._ypirParams {return false}
+    if lhs._inspireParams != rhs._inspireParams {return false}
+    if lhs.numNullifiers != rhs.numNullifiers {return false}
+    if lhs.pirReady != rhs.pirReady {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-extension InspireQueryRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".InspireQueryRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}query\0")
+extension YpirQueryRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".YpirQueryRequest"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "query"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -1797,25 +2122,27 @@ extension InspireQueryRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImpl
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.query.isEmpty {
       try visitor.visitSingularBytesField(value: self.query, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: InspireQueryRequest, rhs: InspireQueryRequest) -> Bool {
+  public static func ==(lhs: YpirQueryRequest, rhs: YpirQueryRequest) -> Bool {
     if lhs.query != rhs.query {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
-extension InspireQueryResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".InspireQueryResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}response\0")
+extension YpirQueryResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".YpirQueryResponse"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "response"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -1827,14 +2154,78 @@ extension InspireQueryResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImp
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.response.isEmpty {
       try visitor.visitSingularBytesField(value: self.response, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: InspireQueryResponse, rhs: InspireQueryResponse) -> Bool {
+  public static func ==(lhs: YpirQueryResponse, rhs: YpirQueryResponse) -> Bool {
+    if lhs.response != rhs.response {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension InspireQueryRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".InspireQueryRequest"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "query"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBytesField(value: &self.query) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.query.isEmpty {
+      try visitor.visitSingularBytesField(value: self.query, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: InspireQueryRequest, rhs: InspireQueryRequest) -> Bool {
+    if lhs.query != rhs.query {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension InspireQueryResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".InspireQueryResponse"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "response"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBytesField(value: &self.response) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.response.isEmpty {
+      try visitor.visitSingularBytesField(value: self.response, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: InspireQueryResponse, rhs: InspireQueryResponse) -> Bool {
     if lhs.response != rhs.response {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -1842,29 +2233,38 @@ extension InspireQueryResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImp
 }
 
 extension GetPirStatusRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".GetPirStatusRequest"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap()
+  public static let protoMessageName: String = _protobuf_package + ".GetPirStatusRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap()
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     // Load everything into unknown fields
     while try decoder.nextFieldNumber() != nil {}
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: GetPirStatusRequest, rhs: GetPirStatusRequest) -> Bool {
+  public static func ==(lhs: GetPirStatusRequest, rhs: GetPirStatusRequest) -> Bool {
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
 extension PirStatusResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".PirStatusResponse"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}available\0\u{1}status\0\u{1}pirDbHeight\0\u{1}pendingBlocks\0\u{1}numNullifiers\0\u{1}numBuckets\0\u{1}rebuildInProgress\0\u{1}lastBuildTime\0")
+  public static let protoMessageName: String = _protobuf_package + ".PirStatusResponse"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "available"),
+    2: .same(proto: "status"),
+    3: .same(proto: "pirDbHeight"),
+    4: .same(proto: "pendingBlocks"),
+    5: .same(proto: "numNullifiers"),
+    6: .same(proto: "numBuckets"),
+    7: .same(proto: "rebuildInProgress"),
+    8: .same(proto: "lastBuildTime"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -1883,7 +2283,7 @@ extension PirStatusResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplem
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.available != false {
       try visitor.visitSingularBoolField(value: self.available, fieldNumber: 1)
     }
@@ -1911,7 +2311,7 @@ extension PirStatusResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplem
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: PirStatusResponse, rhs: PirStatusResponse) -> Bool {
+  public static func ==(lhs: PirStatusResponse, rhs: PirStatusResponse) -> Bool {
     if lhs.available != rhs.available {return false}
     if lhs.status != rhs.status {return false}
     if lhs.pirDbHeight != rhs.pirDbHeight {return false}

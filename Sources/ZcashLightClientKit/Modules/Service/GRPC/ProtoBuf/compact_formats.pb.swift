@@ -25,165 +25,224 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
   typealias Version = _2
 }
 
-/// ChainMetadata represents information about the state of the chain as of a given block.
-struct ChainMetadata: Sendable {
+/// Information about the state of the chain as of a given block.
+public struct ChainMetadata: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// the size of the Sapling note commitment tree as of the end of this block
-  var saplingCommitmentTreeSize: UInt32 = 0
+  public var saplingCommitmentTreeSize: UInt32 = 0
 
   /// the size of the Orchard note commitment tree as of the end of this block
-  var orchardCommitmentTreeSize: UInt32 = 0
+  public var orchardCommitmentTreeSize: UInt32 = 0
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
+/// A compact representation of a Zcash block.
+///
 /// CompactBlock is a packaging of ONLY the data from a block that's needed to:
-///   1. Detect a payment to your shielded Sapling address
-///   2. Detect a spend of your shielded Sapling notes
-///   3. Update your witnesses to generate new Sapling spend proofs.
-struct CompactBlock: Sendable {
+///   1. Detect a payment to your Shielded address
+///   2. Detect a spend of your Shielded notes
+///   3. Update your witnesses to generate new spend proofs.
+///   4. Spend UTXOs associated to t-addresses of your wallet.
+public struct CompactBlock: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// the version of this wire format, for storage
-  var protoVersion: UInt32 = 0
+  public var protoVersion: UInt32 = 0
 
   /// the height of this block
-  var height: UInt64 = 0
+  public var height: UInt64 = 0
 
   /// the ID (hash) of this block, same as in block explorers
-  var hash: Data = Data()
+  public var hash: Data = Data()
 
   /// the ID (hash) of this block's predecessor
-  var prevHash: Data = Data()
+  public var prevHash: Data = Data()
 
   /// Unix epoch time when the block was mined
-  var time: UInt32 = 0
+  public var time: UInt32 = 0
 
-  /// (hash, prevHash, and time) OR (full header)
-  var header: Data = Data()
+  /// full header (as returned by the getblock RPC)
+  public var header: Data = Data()
 
   /// zero or more compact transactions from this block
-  var vtx: [CompactTx] = []
+  public var vtx: [CompactTx] = []
 
   /// information about the state of the chain as of this block
-  var chainMetadata: ChainMetadata {
+  public var chainMetadata: ChainMetadata {
     get {return _chainMetadata ?? ChainMetadata()}
     set {_chainMetadata = newValue}
   }
   /// Returns true if `chainMetadata` has been explicitly set.
-  var hasChainMetadata: Bool {return self._chainMetadata != nil}
+  public var hasChainMetadata: Bool {return self._chainMetadata != nil}
   /// Clears the value of `chainMetadata`. Subsequent reads from it will return its default value.
-  mutating func clearChainMetadata() {self._chainMetadata = nil}
+  public mutating func clearChainMetadata() {self._chainMetadata = nil}
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 
   fileprivate var _chainMetadata: ChainMetadata? = nil
 }
 
+/// A compact representation of a Zcash transaction.
+///
 /// CompactTx contains the minimum information for a wallet to know if this transaction
-/// is relevant to it (either pays to it or spends from it) via shielded elements
-/// only. This message will not encode a transparent-to-transparent transaction.
-struct CompactTx: Sendable {
+/// is relevant to it (either pays to it or spends from it) via shielded elements. Additionally,
+/// it can optionally include the minimum necessary data to detect payments to transparent addresses
+/// related to your wallet.
+public struct CompactTx: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Index and hash will allow the receiver to call out to chain
-  /// explorers or other data structures to retrieve more information
-  /// about this transaction.
-  var index: UInt64 = 0
+  /// The index of the transaction within the block.
+  public var index: UInt64 = 0
 
-  /// the ID (hash) of this transaction, same as in block explorers
-  var hash: Data = Data()
+  /// The id of the transaction as defined in
+  /// [§ 7.1.1 ‘Transaction Identifiers’](https://zips.z.cash/protocol/protocol.pdf#txnidentifiers)
+  /// This byte array MUST be in protocol order and MUST NOT be reversed
+  /// or hex-encoded; the byte-reversed and hex-encoded representation is
+  /// exclusively a textual representation of a txid.
+  public var txid: Data = Data()
 
   /// The transaction fee: present if server can provide. In the case of a
   /// stateless server and a transaction with transparent inputs, this will be
   /// unset because the calculation requires reference to prior transactions.
   /// If there are no transparent inputs, the fee will be calculable as:
   ///    valueBalanceSapling + valueBalanceOrchard + sum(vPubNew) - sum(vPubOld) - sum(tOut)
-  var fee: UInt32 = 0
+  public var fee: UInt32 = 0
 
-  var spends: [CompactSaplingSpend] = []
+  public var spends: [CompactSaplingSpend] = []
 
-  var outputs: [CompactSaplingOutput] = []
+  public var outputs: [CompactSaplingOutput] = []
 
-  var actions: [CompactOrchardAction] = []
+  public var actions: [CompactOrchardAction] = []
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  /// `CompactTxIn` values corresponding to the `vin` entries of the full transaction.
+  ///
+  /// Note: the single null-outpoint input for coinbase transactions is omitted. Light
+  /// clients can test `CompactTx.index == 0` to determine whether a `CompactTx`
+  /// represents a coinbase transaction, as the coinbase transaction is always the
+  /// first transaction in any block.
+  public var vin: [CompactTxIn] = []
 
-  init() {}
+  /// A sequence of transparent outputs being created by the transaction.
+  public var vout: [TxOut] = []
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
 }
 
+/// A compact representation of a transparent transaction input.
+public struct CompactTxIn: @unchecked Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The id of the transaction that generated the output being spent. This
+  /// byte array must be in protocol order and MUST NOT be reversed or
+  /// hex-encoded.
+  public var prevoutTxid: Data = Data()
+
+  /// The index of the output being spent in the `vout` array of the
+  /// transaction referred to by `prevoutTxid`.
+  public var prevoutIndex: UInt32 = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// A transparent output being created by the transaction.
+///
+/// This contains identical data to the `TxOut` type in the transaction itself, and
+/// thus it is not "compact".
+public struct TxOut: @unchecked Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// The value of the output, in Zatoshis.
+  public var value: UInt64 = 0
+
+  /// The script pubkey that must be satisfied in order to spend this output.
+  public var scriptPubKey: Data = Data()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// A compact representation of a [Sapling Spend](https://zips.z.cash/protocol/protocol.pdf#spendencodingandconsensus).
+///
 /// CompactSaplingSpend is a Sapling Spend Description as described in 7.3 of the Zcash
 /// protocol specification.
-struct CompactSaplingSpend: Sendable {
+public struct CompactSaplingSpend: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// nullifier (see the Zcash protocol specification)
-  var nf: Data = Data()
+  /// Nullifier (see the Zcash protocol specification)
+  public var nf: Data = Data()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
-/// output encodes the `cmu` field, `ephemeralKey` field, and a 52-byte prefix of the
-/// `encCiphertext` field of a Sapling Output Description. These fields are described in
-/// section 7.4 of the Zcash protocol spec:
-/// https://zips.z.cash/protocol/protocol.pdf#outputencodingandconsensus
-/// Total size is 116 bytes.
-struct CompactSaplingOutput: Sendable {
+/// A compact representation of a [Sapling Output](https://zips.z.cash/protocol/protocol.pdf#outputencodingandconsensus).
+///
+/// It encodes the `cmu` field, `ephemeralKey` field, and a 52-byte prefix of the
+/// `encCiphertext` field of a Sapling Output Description. Total size is 116 bytes.
+public struct CompactSaplingOutput: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// note commitment u-coordinate
-  var cmu: Data = Data()
+  /// Note commitment u-coordinate.
+  public var cmu: Data = Data()
 
-  /// ephemeral public key
-  var ephemeralKey: Data = Data()
+  /// Ephemeral public key.
+  public var ephemeralKey: Data = Data()
 
-  /// first 52 bytes of ciphertext
-  var ciphertext: Data = Data()
+  /// First 52 bytes of ciphertext.
+  public var ciphertext: Data = Data()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
-/// https://github.com/zcash/zips/blob/main/zip-0225.rst#orchard-action-description-orchardaction
-/// (but not all fields are needed)
-struct CompactOrchardAction: Sendable {
+/// A compact representation of an [Orchard Action](https://zips.z.cash/protocol/protocol.pdf#actionencodingandconsensus).
+public struct CompactOrchardAction: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// [32] The nullifier of the input note
-  var nullifier: Data = Data()
+  public var nullifier: Data = Data()
 
   /// [32] The x-coordinate of the note commitment for the output note
-  var cmx: Data = Data()
+  public var cmx: Data = Data()
 
   /// [32] An encoding of an ephemeral Pallas public key
-  var ephemeralKey: Data = Data()
+  public var ephemeralKey: Data = Data()
 
   /// [52] The first 52 bytes of the encCiphertext field
-  var ciphertext: Data = Data()
+  public var ciphertext: Data = Data()
 
-  var unknownFields = SwiftProtobuf.UnknownStorage()
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  init() {}
+  public init() {}
 }
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
@@ -191,10 +250,13 @@ struct CompactOrchardAction: Sendable {
 fileprivate let _protobuf_package = "cash.z.wallet.sdk.rpc"
 
 extension ChainMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".ChainMetadata"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}saplingCommitmentTreeSize\0\u{1}orchardCommitmentTreeSize\0")
+  public static let protoMessageName: String = _protobuf_package + ".ChainMetadata"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "saplingCommitmentTreeSize"),
+    2: .same(proto: "orchardCommitmentTreeSize"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -207,7 +269,7 @@ extension ChainMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementa
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.saplingCommitmentTreeSize != 0 {
       try visitor.visitSingularUInt32Field(value: self.saplingCommitmentTreeSize, fieldNumber: 1)
     }
@@ -217,7 +279,7 @@ extension ChainMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementa
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: ChainMetadata, rhs: ChainMetadata) -> Bool {
+  public static func ==(lhs: ChainMetadata, rhs: ChainMetadata) -> Bool {
     if lhs.saplingCommitmentTreeSize != rhs.saplingCommitmentTreeSize {return false}
     if lhs.orchardCommitmentTreeSize != rhs.orchardCommitmentTreeSize {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -226,10 +288,19 @@ extension ChainMetadata: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementa
 }
 
 extension CompactBlock: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".CompactBlock"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}protoVersion\0\u{1}height\0\u{1}hash\0\u{1}prevHash\0\u{1}time\0\u{1}header\0\u{1}vtx\0\u{1}chainMetadata\0")
+  public static let protoMessageName: String = _protobuf_package + ".CompactBlock"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "protoVersion"),
+    2: .same(proto: "height"),
+    3: .same(proto: "hash"),
+    4: .same(proto: "prevHash"),
+    5: .same(proto: "time"),
+    6: .same(proto: "header"),
+    7: .same(proto: "vtx"),
+    8: .same(proto: "chainMetadata"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -248,7 +319,7 @@ extension CompactBlock: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     // The use of inline closures is to circumvent an issue where the compiler
     // allocates stack space for every if/case branch local when no optimizations
     // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
@@ -280,7 +351,7 @@ extension CompactBlock: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: CompactBlock, rhs: CompactBlock) -> Bool {
+  public static func ==(lhs: CompactBlock, rhs: CompactBlock) -> Bool {
     if lhs.protoVersion != rhs.protoVersion {return false}
     if lhs.height != rhs.height {return false}
     if lhs.hash != rhs.hash {return false}
@@ -295,32 +366,43 @@ extension CompactBlock: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
 }
 
 extension CompactTx: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".CompactTx"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}index\0\u{1}hash\0\u{1}fee\0\u{1}spends\0\u{1}outputs\0\u{1}actions\0")
+  public static let protoMessageName: String = _protobuf_package + ".CompactTx"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "index"),
+    2: .same(proto: "txid"),
+    3: .same(proto: "fee"),
+    4: .same(proto: "spends"),
+    5: .same(proto: "outputs"),
+    6: .same(proto: "actions"),
+    7: .same(proto: "vin"),
+    8: .same(proto: "vout"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularUInt64Field(value: &self.index) }()
-      case 2: try { try decoder.decodeSingularBytesField(value: &self.hash) }()
+      case 2: try { try decoder.decodeSingularBytesField(value: &self.txid) }()
       case 3: try { try decoder.decodeSingularUInt32Field(value: &self.fee) }()
       case 4: try { try decoder.decodeRepeatedMessageField(value: &self.spends) }()
       case 5: try { try decoder.decodeRepeatedMessageField(value: &self.outputs) }()
       case 6: try { try decoder.decodeRepeatedMessageField(value: &self.actions) }()
+      case 7: try { try decoder.decodeRepeatedMessageField(value: &self.vin) }()
+      case 8: try { try decoder.decodeRepeatedMessageField(value: &self.vout) }()
       default: break
       }
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if self.index != 0 {
       try visitor.visitSingularUInt64Field(value: self.index, fieldNumber: 1)
     }
-    if !self.hash.isEmpty {
-      try visitor.visitSingularBytesField(value: self.hash, fieldNumber: 2)
+    if !self.txid.isEmpty {
+      try visitor.visitSingularBytesField(value: self.txid, fieldNumber: 2)
     }
     if self.fee != 0 {
       try visitor.visitSingularUInt32Field(value: self.fee, fieldNumber: 3)
@@ -334,26 +416,112 @@ extension CompactTx: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementation
     if !self.actions.isEmpty {
       try visitor.visitRepeatedMessageField(value: self.actions, fieldNumber: 6)
     }
+    if !self.vin.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.vin, fieldNumber: 7)
+    }
+    if !self.vout.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.vout, fieldNumber: 8)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: CompactTx, rhs: CompactTx) -> Bool {
+  public static func ==(lhs: CompactTx, rhs: CompactTx) -> Bool {
     if lhs.index != rhs.index {return false}
-    if lhs.hash != rhs.hash {return false}
+    if lhs.txid != rhs.txid {return false}
     if lhs.fee != rhs.fee {return false}
     if lhs.spends != rhs.spends {return false}
     if lhs.outputs != rhs.outputs {return false}
     if lhs.actions != rhs.actions {return false}
+    if lhs.vin != rhs.vin {return false}
+    if lhs.vout != rhs.vout {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension CompactTxIn: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".CompactTxIn"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "prevoutTxid"),
+    2: .same(proto: "prevoutIndex"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBytesField(value: &self.prevoutTxid) }()
+      case 2: try { try decoder.decodeSingularUInt32Field(value: &self.prevoutIndex) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.prevoutTxid.isEmpty {
+      try visitor.visitSingularBytesField(value: self.prevoutTxid, fieldNumber: 1)
+    }
+    if self.prevoutIndex != 0 {
+      try visitor.visitSingularUInt32Field(value: self.prevoutIndex, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: CompactTxIn, rhs: CompactTxIn) -> Bool {
+    if lhs.prevoutTxid != rhs.prevoutTxid {return false}
+    if lhs.prevoutIndex != rhs.prevoutIndex {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension TxOut: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".TxOut"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "value"),
+    2: .same(proto: "scriptPubKey"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularUInt64Field(value: &self.value) }()
+      case 2: try { try decoder.decodeSingularBytesField(value: &self.scriptPubKey) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.value != 0 {
+      try visitor.visitSingularUInt64Field(value: self.value, fieldNumber: 1)
+    }
+    if !self.scriptPubKey.isEmpty {
+      try visitor.visitSingularBytesField(value: self.scriptPubKey, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: TxOut, rhs: TxOut) -> Bool {
+    if lhs.value != rhs.value {return false}
+    if lhs.scriptPubKey != rhs.scriptPubKey {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
 }
 
 extension CompactSaplingSpend: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".CompactSaplingSpend"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}nf\0")
+  public static let protoMessageName: String = _protobuf_package + ".CompactSaplingSpend"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "nf"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -365,14 +533,14 @@ extension CompactSaplingSpend: SwiftProtobuf.Message, SwiftProtobuf._MessageImpl
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.nf.isEmpty {
       try visitor.visitSingularBytesField(value: self.nf, fieldNumber: 1)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: CompactSaplingSpend, rhs: CompactSaplingSpend) -> Bool {
+  public static func ==(lhs: CompactSaplingSpend, rhs: CompactSaplingSpend) -> Bool {
     if lhs.nf != rhs.nf {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -380,10 +548,14 @@ extension CompactSaplingSpend: SwiftProtobuf.Message, SwiftProtobuf._MessageImpl
 }
 
 extension CompactSaplingOutput: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".CompactSaplingOutput"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}cmu\0\u{1}ephemeralKey\0\u{1}ciphertext\0")
+  public static let protoMessageName: String = _protobuf_package + ".CompactSaplingOutput"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "cmu"),
+    2: .same(proto: "ephemeralKey"),
+    3: .same(proto: "ciphertext"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -397,7 +569,7 @@ extension CompactSaplingOutput: SwiftProtobuf.Message, SwiftProtobuf._MessageImp
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.cmu.isEmpty {
       try visitor.visitSingularBytesField(value: self.cmu, fieldNumber: 1)
     }
@@ -410,7 +582,7 @@ extension CompactSaplingOutput: SwiftProtobuf.Message, SwiftProtobuf._MessageImp
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: CompactSaplingOutput, rhs: CompactSaplingOutput) -> Bool {
+  public static func ==(lhs: CompactSaplingOutput, rhs: CompactSaplingOutput) -> Bool {
     if lhs.cmu != rhs.cmu {return false}
     if lhs.ephemeralKey != rhs.ephemeralKey {return false}
     if lhs.ciphertext != rhs.ciphertext {return false}
@@ -420,10 +592,15 @@ extension CompactSaplingOutput: SwiftProtobuf.Message, SwiftProtobuf._MessageImp
 }
 
 extension CompactOrchardAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  static let protoMessageName: String = _protobuf_package + ".CompactOrchardAction"
-  static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}nullifier\0\u{1}cmx\0\u{1}ephemeralKey\0\u{1}ciphertext\0")
+  public static let protoMessageName: String = _protobuf_package + ".CompactOrchardAction"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "nullifier"),
+    2: .same(proto: "cmx"),
+    3: .same(proto: "ephemeralKey"),
+    4: .same(proto: "ciphertext"),
+  ]
 
-  mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
       // The use of inline closures is to circumvent an issue where the compiler
       // allocates stack space for every case branch when no optimizations are
@@ -438,7 +615,7 @@ extension CompactOrchardAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImp
     }
   }
 
-  func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
     if !self.nullifier.isEmpty {
       try visitor.visitSingularBytesField(value: self.nullifier, fieldNumber: 1)
     }
@@ -454,7 +631,7 @@ extension CompactOrchardAction: SwiftProtobuf.Message, SwiftProtobuf._MessageImp
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  static func ==(lhs: CompactOrchardAction, rhs: CompactOrchardAction) -> Bool {
+  public static func ==(lhs: CompactOrchardAction, rhs: CompactOrchardAction) -> Bool {
     if lhs.nullifier != rhs.nullifier {return false}
     if lhs.cmx != rhs.cmx {return false}
     if lhs.ephemeralKey != rhs.ephemeralKey {return false}
