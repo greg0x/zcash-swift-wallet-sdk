@@ -686,19 +686,50 @@ public struct YpirParams: Sendable {
 }
 
 /// InsPIRe-specific parameters (when available)
+/// All fields are required for the client to construct PIR queries.
 public struct InspireParams: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Number of rows
-  public var numRows: UInt64 = 0
+  /// Full InsPIRe setup parameters (from PIR server)
+  public var polyLen: UInt64 = 0
 
-  /// Number of columns
-  public var numCols: UInt64 = 0
+  /// First database dimension
+  public var dbDim1: UInt64 = 0
 
-  /// Element size
-  public var elementSize: UInt64 = 0
+  /// Number of PIR instances
+  public var instances: UInt64 = 0
+
+  /// Database rows
+  public var dbRows: UInt64 = 0
+
+  /// Database columns
+  public var dbCols: UInt64 = 0
+
+  /// Gamma parameter
+  public var gamma: UInt64 = 0
+
+  /// Interpolation degree
+  public var interpolateDegree: UInt64 = 0
+
+  /// Plaintext modulus
+  public var ptModulus: UInt64 = 0
+
+  /// C parameter
+  public var c: UInt64 = 0
+
+  /// GSW parameter
+  public var tGsw: UInt64 = 0
+
+  /// Q2 bits
+  public var q2Bits: UInt64 = 0
+
+  /// T expansion left
+  public var tExpLeft: UInt64 = 0
+
+  /// Response metadata (from PIR server)
+  public var recordSize: UInt64 = 0
 
   /// InsPIRe factor parameter
   public var factor: UInt32 = 0
@@ -709,58 +740,65 @@ public struct InspireParams: Sendable {
 }
 
 /// Response containing PIR parameters
-public struct PirParamsResponse: Sendable {
+public struct PirParamsResponse: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// Height below which clients should use PIR queries
   /// Above this height, clients should use trial decryption (GetBlockRangeNullifiers)
-  public var pirCutoffHeight: UInt64 = 0
+  public var pirCutoffHeight: UInt64 {
+    get {return _storage._pirCutoffHeight}
+    set {_uniqueStorage()._pirCutoffHeight = newValue}
+  }
 
   /// Cuckoo hash table parameters for bucket index calculation
   public var cuckooParams: CuckooParams {
-    get {return _cuckooParams ?? CuckooParams()}
-    set {_cuckooParams = newValue}
+    get {return _storage._cuckooParams ?? CuckooParams()}
+    set {_uniqueStorage()._cuckooParams = newValue}
   }
   /// Returns true if `cuckooParams` has been explicitly set.
-  public var hasCuckooParams: Bool {return self._cuckooParams != nil}
+  public var hasCuckooParams: Bool {return _storage._cuckooParams != nil}
   /// Clears the value of `cuckooParams`. Subsequent reads from it will return its default value.
-  public mutating func clearCuckooParams() {self._cuckooParams = nil}
+  public mutating func clearCuckooParams() {_uniqueStorage()._cuckooParams = nil}
 
   /// YPIR parameters (always available)
   public var ypirParams: YpirParams {
-    get {return _ypirParams ?? YpirParams()}
-    set {_ypirParams = newValue}
+    get {return _storage._ypirParams ?? YpirParams()}
+    set {_uniqueStorage()._ypirParams = newValue}
   }
   /// Returns true if `ypirParams` has been explicitly set.
-  public var hasYpirParams: Bool {return self._ypirParams != nil}
+  public var hasYpirParams: Bool {return _storage._ypirParams != nil}
   /// Clears the value of `ypirParams`. Subsequent reads from it will return its default value.
-  public mutating func clearYpirParams() {self._ypirParams = nil}
+  public mutating func clearYpirParams() {_uniqueStorage()._ypirParams = nil}
 
   /// InsPIRe parameters (may be absent if not compiled with inspire feature)
   public var inspireParams: InspireParams {
-    get {return _inspireParams ?? InspireParams()}
-    set {_inspireParams = newValue}
+    get {return _storage._inspireParams ?? InspireParams()}
+    set {_uniqueStorage()._inspireParams = newValue}
   }
   /// Returns true if `inspireParams` has been explicitly set.
-  public var hasInspireParams: Bool {return self._inspireParams != nil}
+  public var hasInspireParams: Bool {return _storage._inspireParams != nil}
   /// Clears the value of `inspireParams`. Subsequent reads from it will return its default value.
-  public mutating func clearInspireParams() {self._inspireParams = nil}
+  public mutating func clearInspireParams() {_uniqueStorage()._inspireParams = nil}
 
   /// Total number of nullifiers in the PIR database
-  public var numNullifiers: UInt64 = 0
+  public var numNullifiers: UInt64 {
+    get {return _storage._numNullifiers}
+    set {_uniqueStorage()._numNullifiers = newValue}
+  }
 
   /// Whether the PIR service is ready to handle queries
-  public var pirReady: Bool = false
+  public var pirReady: Bool {
+    get {return _storage._pirReady}
+    set {_uniqueStorage()._pirReady = newValue}
+  }
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 
-  fileprivate var _cuckooParams: CuckooParams? = nil
-  fileprivate var _ypirParams: YpirParams? = nil
-  fileprivate var _inspireParams: InspireParams? = nil
+  fileprivate var _storage = _StorageClass.defaultInstance
 }
 
 /// Request to execute a YPIR query
@@ -1991,10 +2029,20 @@ extension YpirParams: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementatio
 extension InspireParams: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".InspireParams"
   public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-    1: .same(proto: "numRows"),
-    2: .same(proto: "numCols"),
-    3: .same(proto: "elementSize"),
-    4: .same(proto: "factor"),
+    1: .same(proto: "polyLen"),
+    2: .same(proto: "dbDim1"),
+    3: .same(proto: "instances"),
+    4: .same(proto: "dbRows"),
+    5: .same(proto: "dbCols"),
+    6: .same(proto: "gamma"),
+    7: .same(proto: "interpolateDegree"),
+    8: .same(proto: "ptModulus"),
+    9: .same(proto: "c"),
+    10: .same(proto: "tGsw"),
+    11: .same(proto: "q2Bits"),
+    12: .same(proto: "tExpLeft"),
+    13: .same(proto: "recordSize"),
+    14: .same(proto: "factor"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -2003,35 +2051,85 @@ extension InspireParams: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementa
       // allocates stack space for every case branch when no optimizations are
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
-      case 1: try { try decoder.decodeSingularUInt64Field(value: &self.numRows) }()
-      case 2: try { try decoder.decodeSingularUInt64Field(value: &self.numCols) }()
-      case 3: try { try decoder.decodeSingularUInt64Field(value: &self.elementSize) }()
-      case 4: try { try decoder.decodeSingularUInt32Field(value: &self.factor) }()
+      case 1: try { try decoder.decodeSingularUInt64Field(value: &self.polyLen) }()
+      case 2: try { try decoder.decodeSingularUInt64Field(value: &self.dbDim1) }()
+      case 3: try { try decoder.decodeSingularUInt64Field(value: &self.instances) }()
+      case 4: try { try decoder.decodeSingularUInt64Field(value: &self.dbRows) }()
+      case 5: try { try decoder.decodeSingularUInt64Field(value: &self.dbCols) }()
+      case 6: try { try decoder.decodeSingularUInt64Field(value: &self.gamma) }()
+      case 7: try { try decoder.decodeSingularUInt64Field(value: &self.interpolateDegree) }()
+      case 8: try { try decoder.decodeSingularUInt64Field(value: &self.ptModulus) }()
+      case 9: try { try decoder.decodeSingularUInt64Field(value: &self.c) }()
+      case 10: try { try decoder.decodeSingularUInt64Field(value: &self.tGsw) }()
+      case 11: try { try decoder.decodeSingularUInt64Field(value: &self.q2Bits) }()
+      case 12: try { try decoder.decodeSingularUInt64Field(value: &self.tExpLeft) }()
+      case 13: try { try decoder.decodeSingularUInt64Field(value: &self.recordSize) }()
+      case 14: try { try decoder.decodeSingularUInt32Field(value: &self.factor) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if self.numRows != 0 {
-      try visitor.visitSingularUInt64Field(value: self.numRows, fieldNumber: 1)
+    if self.polyLen != 0 {
+      try visitor.visitSingularUInt64Field(value: self.polyLen, fieldNumber: 1)
     }
-    if self.numCols != 0 {
-      try visitor.visitSingularUInt64Field(value: self.numCols, fieldNumber: 2)
+    if self.dbDim1 != 0 {
+      try visitor.visitSingularUInt64Field(value: self.dbDim1, fieldNumber: 2)
     }
-    if self.elementSize != 0 {
-      try visitor.visitSingularUInt64Field(value: self.elementSize, fieldNumber: 3)
+    if self.instances != 0 {
+      try visitor.visitSingularUInt64Field(value: self.instances, fieldNumber: 3)
+    }
+    if self.dbRows != 0 {
+      try visitor.visitSingularUInt64Field(value: self.dbRows, fieldNumber: 4)
+    }
+    if self.dbCols != 0 {
+      try visitor.visitSingularUInt64Field(value: self.dbCols, fieldNumber: 5)
+    }
+    if self.gamma != 0 {
+      try visitor.visitSingularUInt64Field(value: self.gamma, fieldNumber: 6)
+    }
+    if self.interpolateDegree != 0 {
+      try visitor.visitSingularUInt64Field(value: self.interpolateDegree, fieldNumber: 7)
+    }
+    if self.ptModulus != 0 {
+      try visitor.visitSingularUInt64Field(value: self.ptModulus, fieldNumber: 8)
+    }
+    if self.c != 0 {
+      try visitor.visitSingularUInt64Field(value: self.c, fieldNumber: 9)
+    }
+    if self.tGsw != 0 {
+      try visitor.visitSingularUInt64Field(value: self.tGsw, fieldNumber: 10)
+    }
+    if self.q2Bits != 0 {
+      try visitor.visitSingularUInt64Field(value: self.q2Bits, fieldNumber: 11)
+    }
+    if self.tExpLeft != 0 {
+      try visitor.visitSingularUInt64Field(value: self.tExpLeft, fieldNumber: 12)
+    }
+    if self.recordSize != 0 {
+      try visitor.visitSingularUInt64Field(value: self.recordSize, fieldNumber: 13)
     }
     if self.factor != 0 {
-      try visitor.visitSingularUInt32Field(value: self.factor, fieldNumber: 4)
+      try visitor.visitSingularUInt32Field(value: self.factor, fieldNumber: 14)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: InspireParams, rhs: InspireParams) -> Bool {
-    if lhs.numRows != rhs.numRows {return false}
-    if lhs.numCols != rhs.numCols {return false}
-    if lhs.elementSize != rhs.elementSize {return false}
+    if lhs.polyLen != rhs.polyLen {return false}
+    if lhs.dbDim1 != rhs.dbDim1 {return false}
+    if lhs.instances != rhs.instances {return false}
+    if lhs.dbRows != rhs.dbRows {return false}
+    if lhs.dbCols != rhs.dbCols {return false}
+    if lhs.gamma != rhs.gamma {return false}
+    if lhs.interpolateDegree != rhs.interpolateDegree {return false}
+    if lhs.ptModulus != rhs.ptModulus {return false}
+    if lhs.c != rhs.c {return false}
+    if lhs.tGsw != rhs.tGsw {return false}
+    if lhs.q2Bits != rhs.q2Bits {return false}
+    if lhs.tExpLeft != rhs.tExpLeft {return false}
+    if lhs.recordSize != rhs.recordSize {return false}
     if lhs.factor != rhs.factor {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -2049,56 +2147,106 @@ extension PirParamsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplem
     6: .same(proto: "pirReady"),
   ]
 
+  fileprivate class _StorageClass {
+    var _pirCutoffHeight: UInt64 = 0
+    var _cuckooParams: CuckooParams? = nil
+    var _ypirParams: YpirParams? = nil
+    var _inspireParams: InspireParams? = nil
+    var _numNullifiers: UInt64 = 0
+    var _pirReady: Bool = false
+
+    #if swift(>=5.10)
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+    #else
+      static let defaultInstance = _StorageClass()
+    #endif
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _pirCutoffHeight = source._pirCutoffHeight
+      _cuckooParams = source._cuckooParams
+      _ypirParams = source._ypirParams
+      _inspireParams = source._inspireParams
+      _numNullifiers = source._numNullifiers
+      _pirReady = source._pirReady
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
+
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularUInt64Field(value: &self.pirCutoffHeight) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._cuckooParams) }()
-      case 3: try { try decoder.decodeSingularMessageField(value: &self._ypirParams) }()
-      case 4: try { try decoder.decodeSingularMessageField(value: &self._inspireParams) }()
-      case 5: try { try decoder.decodeSingularUInt64Field(value: &self.numNullifiers) }()
-      case 6: try { try decoder.decodeSingularBoolField(value: &self.pirReady) }()
-      default: break
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularUInt64Field(value: &_storage._pirCutoffHeight) }()
+        case 2: try { try decoder.decodeSingularMessageField(value: &_storage._cuckooParams) }()
+        case 3: try { try decoder.decodeSingularMessageField(value: &_storage._ypirParams) }()
+        case 4: try { try decoder.decodeSingularMessageField(value: &_storage._inspireParams) }()
+        case 5: try { try decoder.decodeSingularUInt64Field(value: &_storage._numNullifiers) }()
+        case 6: try { try decoder.decodeSingularBoolField(value: &_storage._pirReady) }()
+        default: break
+        }
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if self.pirCutoffHeight != 0 {
-      try visitor.visitSingularUInt64Field(value: self.pirCutoffHeight, fieldNumber: 1)
-    }
-    try { if let v = self._cuckooParams {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-    } }()
-    try { if let v = self._ypirParams {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
-    } }()
-    try { if let v = self._inspireParams {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
-    } }()
-    if self.numNullifiers != 0 {
-      try visitor.visitSingularUInt64Field(value: self.numNullifiers, fieldNumber: 5)
-    }
-    if self.pirReady != false {
-      try visitor.visitSingularBoolField(value: self.pirReady, fieldNumber: 6)
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      if _storage._pirCutoffHeight != 0 {
+        try visitor.visitSingularUInt64Field(value: _storage._pirCutoffHeight, fieldNumber: 1)
+      }
+      try { if let v = _storage._cuckooParams {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+      } }()
+      try { if let v = _storage._ypirParams {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+      } }()
+      try { if let v = _storage._inspireParams {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+      } }()
+      if _storage._numNullifiers != 0 {
+        try visitor.visitSingularUInt64Field(value: _storage._numNullifiers, fieldNumber: 5)
+      }
+      if _storage._pirReady != false {
+        try visitor.visitSingularBoolField(value: _storage._pirReady, fieldNumber: 6)
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: PirParamsResponse, rhs: PirParamsResponse) -> Bool {
-    if lhs.pirCutoffHeight != rhs.pirCutoffHeight {return false}
-    if lhs._cuckooParams != rhs._cuckooParams {return false}
-    if lhs._ypirParams != rhs._ypirParams {return false}
-    if lhs._inspireParams != rhs._inspireParams {return false}
-    if lhs.numNullifiers != rhs.numNullifiers {return false}
-    if lhs.pirReady != rhs.pirReady {return false}
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._pirCutoffHeight != rhs_storage._pirCutoffHeight {return false}
+        if _storage._cuckooParams != rhs_storage._cuckooParams {return false}
+        if _storage._ypirParams != rhs_storage._ypirParams {return false}
+        if _storage._inspireParams != rhs_storage._inspireParams {return false}
+        if _storage._numNullifiers != rhs_storage._numNullifiers {return false}
+        if _storage._pirReady != rhs_storage._pirReady {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

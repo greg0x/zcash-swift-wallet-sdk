@@ -248,30 +248,28 @@ public actor NullifierPIRClient {
             entriesPerBucket: entriesPerBucket
         )
         
-        // Convert InsPIRe params
-        // The server provides: numRows, numCols, elementSize, factor
-        // We need to compute or use standard values for the rest
+        // Convert InsPIRe params - all fields now come from the server
         let grpcInspire = params.inspireParams
         
         let inspire = NullifierCrypto.InspireSetup(
-            polyLen: 2048,  // Standard poly length
-            dbDim1: grpcInspire.numRows,
-            instances: 1,
-            dbRows: grpcInspire.numRows,
-            dbCols: grpcInspire.numCols,
-            gamma: 2048,  // Standard gamma
-            interpolateDegree: 32,  // Standard
-            ptModulus: 0,  // Will be computed by crypto layer
-            c: 1,
-            tGsw: 0,  // Will be computed
-            q2Bits: 0,  // Will be computed
-            tExpLeft: 0  // Will be computed
+            polyLen: grpcInspire.polyLen,
+            dbDim1: grpcInspire.dbDim1,
+            instances: grpcInspire.instances,
+            dbRows: grpcInspire.dbRows,
+            dbCols: grpcInspire.dbCols,
+            gamma: grpcInspire.gamma,
+            interpolateDegree: grpcInspire.interpolateDegree,
+            ptModulus: grpcInspire.ptModulus,
+            c: grpcInspire.c,
+            tGsw: grpcInspire.tGsw,
+            q2Bits: grpcInspire.q2Bits,
+            tExpLeft: grpcInspire.tExpLeft
         )
         
         return NullifierCrypto.PirParams(
             inspireSetup: inspire,
             cuckooParams: cuckoo,
-            recordSize: grpcInspire.elementSize,
+            recordSize: grpcInspire.recordSize,
             factor: UInt64(grpcInspire.factor)
         )
     }
