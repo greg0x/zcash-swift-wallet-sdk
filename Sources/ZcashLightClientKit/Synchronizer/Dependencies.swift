@@ -219,8 +219,9 @@ enum Dependencies {
                 return nil
             }
             let service = di.resolve(LightWalletService.self)
+            let logger = di.resolve(Logger.self)
             let networkService = TxidNetworkService(service: service)
-            return TxidPirClient(networkService: networkService)
+            return TxidPirClient(networkService: networkService, logger: logger)
         }
 
         container.register(type: BlockEnhancer.self, isSingleton: true) { di in

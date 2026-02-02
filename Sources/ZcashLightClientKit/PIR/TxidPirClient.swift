@@ -119,7 +119,7 @@ public struct TxidActionDataFullResult: Sendable {
 ///
 /// ```swift
 /// let networkService = TxidNetworkService(service: lightWalletService)
-/// let client = TxidPirClient(networkService: networkService)
+/// let client = TxidPirClient(networkService: networkService, logger: logger)
 ///
 /// // Connect via gRPC (through lightwalletd) and precompute keys (expensive, ~3-10s)
 /// try await client.connect()
@@ -141,15 +141,18 @@ public actor TxidPirClient {
 
     private var rustClient: TxidPirClientState?  // FFI class from PIRClientFFI
     private let networkService: TxidNetworkService?
+    private let logger: Logger
 
-    public init(networkService: TxidNetworkService) {
+    public init(networkService: TxidNetworkService, logger: Logger) {
         self.networkService = networkService
+        self.logger = logger
     }
 
     /// Creates a placeholder client that will fail when used.
     /// Only for dependency injection stubs - real usage requires networkService.
-    public init() {
+    public init(logger: Logger) {
         self.networkService = nil
+        self.logger = logger
     }
 
     // MARK: - Connection
@@ -285,6 +288,11 @@ public actor TxidPirClient {
         let queryBundle = try rustClient.prepareTxLookupQuery(blockHeight: blockHeight, txIndex: txIndex)
         timing.queryGenMs = (CFAbsoluteTimeGetCurrent() - queryGenStart) * 1000
 
+        // Debug: log query sizes
+        for (i, query) in queryBundle.queries.enumerated() {
+            logger.debug("[PIR] TX lookup query \(i): \(query.queryBytes.count) bytes")
+        }
+
         // Send queries via gRPC (through lightwalletd)
         var responses: [Data] = []
         for query in queryBundle.queries {
@@ -339,6 +347,11 @@ public actor TxidPirClient {
         let queryGenStart = CFAbsoluteTimeGetCurrent()
         let queryBundle = try rustClient.prepareActionDataQuery(startIndex: startIndex, actionCount: actionCount)
         timing.queryGenMs = (CFAbsoluteTimeGetCurrent() - queryGenStart) * 1000
+
+        // Debug: log query sizes
+        for (i, query) in queryBundle.queries.enumerated() {
+            logger.debug("[PIR] Action data query \(i): \(query.queryBytes.count) bytes")
+        }
 
         // Send queries via gRPC (through lightwalletd)
         var responses: [Data] = []
