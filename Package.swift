@@ -17,18 +17,21 @@ let package = Package(
         .package(url: "https://github.com/grpc/grpc-swift.git", from: "1.24.2"),
         .package(url: "https://github.com/stephencelis/SQLite.swift.git", from: "0.15.3"),
         // Using local FFI with PIR support
-        .package(path: "../zcash-light-client-ffi"),
-        // PIR crypto-only UniFFI bindings
-        .package(name: "NullifierCrypto", path: "../../nullifier-pir/crates/crypto")
+        .package(path: "../zcash-light-client-ffi")
     ],
     targets: [
+        // PIRClientFFI xcframework for txid PIR
+        .binaryTarget(
+            name: "PIRClientFFI",
+            path: "XCFrameworks/PIRClientFFI.xcframework"
+        ),
         .target(
             name: "ZcashLightClientKit",
             dependencies: [
                 .product(name: "SQLite", package: "SQLite.swift"),
                 .product(name: "GRPC", package: "grpc-swift"),
                 .product(name: "libzcashlc", package: "zcash-light-client-ffi"),
-                .product(name: "NullifierCrypto", package: "NullifierCrypto")
+                "PIRClientFFI"
             ],
             exclude: [
                 "Modules/Service/GRPC/ProtoBuf/proto/compact_formats.proto",
