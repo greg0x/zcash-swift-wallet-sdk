@@ -297,25 +297,33 @@ extension BlockEnhancerImpl: BlockEnhancer {
             )
         }
 
-        // 6. Pass PIR data + compact data to Rust for trial decryption
-        // Phase 7 will implement the actual FFI method.
-        // For now, log success and fall back to GetTransaction for actual decryption.
-        logger.info("PIR: Successfully fetched data for \(pirActions.count) actions via PIR")
+        // 6. Merge compact + PIR data into 788-byte actions for Rust FFI
+        // Layout: nullifier(32) + cmx(32) + epk(32) + enc_ciphertext(580) + out_ciphertext(80) + cv(32) = 788
+        var mergedActions: [Data] = []
+        for (compact, pir) in zip(compactActions, pirActions) {
+            var action = Data(capacity: 788)
+            action.append(compact.nullifier)           // 32 bytes
+            action.append(compact.cmx)                 // 32 bytes
+            action.append(compact.ephemeralKey)        // 32 bytes
+            action.append(compact.encCiphertextHead)   // 52 bytes
+            action.append(pir.encCiphertextTail)       // 528 bytes
+            action.append(pir.outCiphertext)           // 80 bytes
+            action.append(pir.cv)                      // 32 bytes
+            mergedActions.append(action)
+        }
+
+        logger.info("PIR: Successfully fetched data for \(mergedActions.count) actions via PIR")
         logger.info("PIR: Bandwidth - TX lookup: \(lookupResult.bandwidth.uploadBytes)↑ \(lookupResult.bandwidth.downloadBytes)↓ bytes")
         logger.info("PIR: Bandwidth - Action data: \(actionResult.bandwidth.uploadBytes)↑ \(actionResult.bandwidth.downloadBytes)↓ bytes")
 
-        // TODO: Phase 7 - Replace this with actual PIR-based decryption
-        // try await rustBackend.decryptAndStorePirActions(
-        //     txId: txId,
-        //     blockHeight: blockHeight,
-        //     txIndex: txIndex,
-        //     pirActions: pirActions,
-        //     compactActions: compactActions
-        // )
+        // 7. Call Rust FFI for trial decryption and storage
+        let decryptedCount = try await rustBackend.decryptAndStorePirActions(
+            txid: txId,
+            minedHeight: UInt32(blockHeight),
+            actions: mergedActions
+        )
 
-        // Temporary: Fall back to GetTransaction for actual enhancement
-        // This validates PIR queries work while keeping wallet functional
-        try await enhanceViaGetTransaction(txId: txId)
+        logger.info("PIR: Decrypted and stored \(decryptedCount) notes via PIR enhancement")
     }
 
     /// Fetch a single compact block by height.
@@ -347,7 +355,7 @@ struct CompactActionData {
 
 /// PIR action data (private data from PIR server).
 struct PirActionData {
-    /// enc_ciphertext bytes 52-564 (513 bytes for Orchard).
+    /// enc_ciphertext bytes 52-580 (528 bytes for Orchard).
     let encCiphertextTail: Data
     /// out_ciphertext (80 bytes).
     let outCiphertext: Data

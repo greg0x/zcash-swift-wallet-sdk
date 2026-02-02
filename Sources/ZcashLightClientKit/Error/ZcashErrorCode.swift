@@ -99,6 +99,8 @@ public enum ZcashErrorCode: String {
     case rustCreateToAddress = "ZRUST0002"
     /// Error from rust layer when calling ZcashRustBackend.decryptAndStoreTransaction
     case rustDecryptAndStoreTransaction = "ZRUST0003"
+    /// Error from rust layer when calling ZcashRustBackend.decryptAndStorePirActions
+    case rustDecryptAndStorePirActions = "ZRUST0080"
     /// Error from rust layer when calling ZcashRustBackend.getBalance
     case rustGetBalance = "ZRUST0004"
     /// Error from rust layer when calling ZcashRustBackend.getCurrentAddress

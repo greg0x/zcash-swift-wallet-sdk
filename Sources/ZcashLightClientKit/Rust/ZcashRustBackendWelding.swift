@@ -98,6 +98,23 @@ protocol ZcashRustBackendWelding {
     /// - Throws: `rustDecryptAndStoreTransaction`.
     func decryptAndStoreTransaction(txBytes: [UInt8], minedHeight: UInt32?) async throws -> Data
 
+    /// Decrypts and stores Orchard actions reconstructed from PIR + compact block data.
+    ///
+    /// Each action is a 788-byte blob with the following layout:
+    /// - bytes 0-31: nullifier (from compact block)
+    /// - bytes 32-63: cmx (from compact block)
+    /// - bytes 64-95: ephemeral_key (from compact block)
+    /// - bytes 96-675: enc_ciphertext (52 from compact + 528 from PIR)
+    /// - bytes 676-755: out_ciphertext (from PIR)
+    /// - bytes 756-787: cv / value commitment (from PIR)
+    ///
+    /// - parameter txid: The transaction ID
+    /// - parameter minedHeight: Block height where the transaction was mined
+    /// - parameter actions: Array of 788-byte action blobs (pre-merged from compact + PIR data)
+    /// - Returns: Number of notes successfully decrypted and stored
+    /// - Throws: `rustDecryptAndStorePirActions` on error
+    func decryptAndStorePirActions(txid: Data, minedHeight: UInt32, actions: [Data]) async throws -> Int32
+
     /// Returns the most-recently-generated unified payment address for the specified account.
     /// - parameter account: index of the given account
     /// - Throws:

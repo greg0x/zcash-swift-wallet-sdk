@@ -509,6 +509,40 @@ struct ZcashRustBackend: ZcashRustBackendWelding {
         return Data(contiguousTxidBytes)
     }
 
+    func decryptAndStorePirActions(txid: Data, minedHeight: UInt32, actions: [Data]) async throws -> Int32 {
+        // Flatten actions into contiguous byte array (788 bytes per action)
+        let actionSize = 788
+        var actionsBytes = [UInt8]()
+        actionsBytes.reserveCapacity(actions.count * actionSize)
+
+        for action in actions {
+            guard action.count == actionSize else {
+                throw ZcashError.rustDecryptAndStorePirActions("Invalid action size: \(action.count), expected \(actionSize)")
+            }
+            actionsBytes.append(contentsOf: action)
+        }
+
+        let result = actionsBytes.withUnsafeBufferPointer { actionsPtr in
+            txid.withUnsafeBytes { txidPtr in
+                zcashlc_decrypt_and_store_pir_actions(
+                    dbData.0,
+                    dbData.1,
+                    networkType.networkId,
+                    txidPtr.baseAddress?.assumingMemoryBound(to: UInt8.self),
+                    minedHeight,
+                    UInt(actions.count),
+                    actionsPtr.baseAddress
+                )
+            }
+        }
+
+        guard result >= 0 else {
+            throw ZcashError.rustDecryptAndStorePirActions(lastErrorMessage(fallback: "`decryptAndStorePirActions` failed with unknown error"))
+        }
+
+        return result
+    }
+
     @DBActor
     func getCurrentAddress(accountUUID: AccountUUID) async throws -> UnifiedAddress {
         let addressCStr = zcashlc_get_current_address(
