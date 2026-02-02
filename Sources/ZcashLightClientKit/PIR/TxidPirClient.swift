@@ -26,7 +26,7 @@ public enum TxidPirConnectionState: Equatable, Sendable {
 }
 
 /// InSPIRe parameters for display.
-public struct TxidInspireParamsInfo: Sendable {
+public struct TxidInspireParamsInfo: Sendable, Equatable {
     public let dbRows: UInt64
     public let dbCols: UInt64
     public let polyLen: UInt64
@@ -35,7 +35,7 @@ public struct TxidInspireParamsInfo: Sendable {
 }
 
 /// TX Lookup parameters from server.
-public struct TxidLookupParamsInfo: Sendable {
+public struct TxidLookupParamsInfo: Sendable, Equatable {
     public let dbVersion: UInt64
     public let startHeight: UInt32
     public let endHeight: UInt32
@@ -46,7 +46,7 @@ public struct TxidLookupParamsInfo: Sendable {
 }
 
 /// Action Data parameters from server.
-public struct TxidActionDataParamsInfo: Sendable {
+public struct TxidActionDataParamsInfo: Sendable, Equatable {
     public let dbVersion: UInt64
     public let startHeight: UInt32
     public let endHeight: UInt32
