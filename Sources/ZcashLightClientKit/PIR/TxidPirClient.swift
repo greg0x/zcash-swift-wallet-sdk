@@ -140,10 +140,16 @@ public actor TxidPirClient {
     public private(set) var actionDataParams: TxidActionDataParamsInfo?
 
     private var rustClient: TxidPirClientState?  // FFI class from PIRClientFFI
-    private let networkService: TxidNetworkService
+    private let networkService: TxidNetworkService?
 
     public init(networkService: TxidNetworkService) {
         self.networkService = networkService
+    }
+
+    /// Creates a placeholder client that will fail when used.
+    /// Only for dependency injection stubs - real usage requires networkService.
+    public init() {
+        self.networkService = nil
     }
 
     // MARK: - Connection
@@ -153,6 +159,10 @@ public actor TxidPirClient {
     /// This fetches the PIR parameters from the server and initializes
     /// the cryptographic state. Call `precomputeKeys()` after this.
     public func connect() async throws {
+        guard let networkService = networkService else {
+            throw TxidPirError.notConfigured
+        }
+
         self.state = TxidPirConnectionState.connecting
 
         do {
@@ -260,6 +270,9 @@ public actor TxidPirClient {
     ///   - txIndex: The index of the transaction within the block.
     /// - Returns: The result including action data indices, timing, and bandwidth stats.
     public func queryTxLookup(blockHeight: UInt32, txIndex: UInt16) async throws -> TxidLookupFullResult {
+        guard let networkService = networkService else {
+            throw TxidPirError.notConfigured
+        }
         guard case TxidPirConnectionState.ready = state, let rustClient = rustClient else {
             throw TxidPirError.notReady
         }
@@ -312,6 +325,9 @@ public actor TxidPirClient {
     ///   - actionCount: Number of actions to retrieve.
     /// - Returns: The action data along with timing and bandwidth stats.
     public func queryActionData(startIndex: UInt64, actionCount: UInt16) async throws -> TxidActionDataFullResult {
+        guard let networkService = networkService else {
+            throw TxidPirError.notConfigured
+        }
         guard case TxidPirConnectionState.ready = state, let rustClient = rustClient else {
             throw TxidPirError.notReady
         }
@@ -407,6 +423,7 @@ extension TxidCuckooParamsResponse {
 
 /// Errors from the txid PIR client.
 public enum TxidPirError: LocalizedError, Sendable {
+    case notConfigured
     case notConnected
     case notReady
     case networkError(String)
@@ -414,6 +431,8 @@ public enum TxidPirError: LocalizedError, Sendable {
 
     public var errorDescription: String? {
         switch self {
+        case .notConfigured:
+            return "PIR client not configured - networkService is required"
         case .notConnected:
             return "PIR client not connected - call connect() first"
         case .notReady:

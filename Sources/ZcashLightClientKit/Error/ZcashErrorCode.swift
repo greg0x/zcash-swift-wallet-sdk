@@ -100,7 +100,7 @@ public enum ZcashErrorCode: String {
     /// Error from rust layer when calling ZcashRustBackend.decryptAndStoreTransaction
     case rustDecryptAndStoreTransaction = "ZRUST0003"
     /// Error from rust layer when calling ZcashRustBackend.decryptAndStorePirActions
-    case rustDecryptAndStorePirActions = "ZRUST0080"
+    case rustDecryptAndStorePirActions = "ZRUST0091"
     /// Error from rust layer when calling ZcashRustBackend.getBalance
     case rustGetBalance = "ZRUST0004"
     /// Error from rust layer when calling ZcashRustBackend.getCurrentAddress
