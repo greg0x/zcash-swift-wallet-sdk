@@ -64,7 +64,7 @@ struct BlockEnhancerImpl {
     let logger: Logger
     let sdkFlags: SDKFlags
     let txidPirClient: TxidPirClient?
-    let pirConfig: CompactBlockProcessor.PirConfig
+    let pirConfig: PirConfig
 }
 
 extension BlockEnhancerImpl: BlockEnhancer {

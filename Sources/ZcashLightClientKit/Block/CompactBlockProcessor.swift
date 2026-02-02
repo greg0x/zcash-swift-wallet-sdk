@@ -45,34 +45,6 @@ actor CompactBlockProcessor {
     private var consecutiveChainValidationErrors: Int = 0
     
     private var compactBlockProgress: CompactBlockProgress = .zero
-    
-    /// Configuration for PIR-based transaction enhancement.
-    ///
-    /// PIR (Private Information Retrieval) allows the wallet to fetch transaction data
-    /// without revealing which transaction it's interested in to the server.
-    public struct PirConfig {
-        /// Enable PIR for transaction enhancement (production flag).
-        /// When true, enhancement will attempt to use PIR instead of GetTransaction.
-        public var isPirEnhanceEnabled: Bool
-
-        /// DEBUG: Disable mempool sync to force enhancement path (testing only).
-        /// When true, all transactions go through block sync → enhancement → PIR
-        /// instead of receiving full data via mempool stream.
-        public var debugDisableMempoolSync: Bool
-
-        public init(
-            isPirEnhanceEnabled: Bool = false,
-            debugDisableMempoolSync: Bool = false
-        ) {
-            self.isPirEnhanceEnabled = isPirEnhanceEnabled
-            self.debugDisableMempoolSync = debugDisableMempoolSync
-        }
-
-        /// Default configuration with PIR disabled.
-        public static var `default`: PirConfig {
-            PirConfig()
-        }
-    }
 
     /// Compact Block Processor configuration
     ///
@@ -183,7 +155,13 @@ actor CompactBlockProcessor {
     /// Initializes a CompactBlockProcessor instance from an Initialized object
     /// - Parameters:
     ///     - initializer: an instance that complies to CompactBlockDownloading protocol
-    init(initializer: Initializer, walletBirthdayProvider: @escaping () -> BlockHeight) {
+    ///     - walletBirthdayProvider: closure that returns the wallet birthday height
+    ///     - pirConfig: configuration for PIR-based transaction enhancement
+    init(
+        initializer: Initializer,
+        walletBirthdayProvider: @escaping () -> BlockHeight,
+        pirConfig: PirConfig = .default
+    ) {
         self.init(
             container: initializer.container,
             config: Configuration(
@@ -195,7 +173,8 @@ actor CompactBlockProcessor {
                 outputParamsURL: initializer.outputParamsURL,
                 saplingParamsSourceURL: initializer.saplingParamsSourceURL,
                 walletBirthdayProvider: walletBirthdayProvider,
-                network: initializer.network
+                network: initializer.network,
+                pirConfig: pirConfig
             )
         )
     }

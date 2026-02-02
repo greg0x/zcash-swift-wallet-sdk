@@ -56,8 +56,13 @@ public class SDKSynchronizer: Synchronizer {
     var latestBlocksDataProvider: LatestBlocksDataProvider
 
     /// Creates an SDKSynchronizer instance
-    /// - Parameter initializer: a wallet Initializer object
-    public convenience init(initializer: Initializer) {
+    /// - Parameters:
+    ///   - initializer: a wallet Initializer object
+    ///   - pirConfig: configuration for PIR-based transaction enhancement (default: disabled)
+    public convenience init(
+        initializer: Initializer,
+        pirConfig: PirConfig = .default
+    ) {
         self.init(
             status: .unprepared,
             initializer: initializer,
@@ -65,7 +70,8 @@ public class SDKSynchronizer: Synchronizer {
             transactionRepository: initializer.transactionRepository,
             blockProcessor: CompactBlockProcessor(
                 initializer: initializer,
-                walletBirthdayProvider: { initializer.walletBirthday }
+                walletBirthdayProvider: { initializer.walletBirthday },
+                pirConfig: pirConfig
             ),
             syncSessionTicker: .live
         )

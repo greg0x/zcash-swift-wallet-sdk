@@ -2712,6 +2712,24 @@ class SynchronizerMock: Synchronizer {
         }
     }
 
+    // MARK: - createTxidPirClient
+
+    var createTxidPirClientCallsCount = 0
+    var createTxidPirClientCalled: Bool {
+        return createTxidPirClientCallsCount > 0
+    }
+    var createTxidPirClientReturnValue: TxidPirClient!
+    var createTxidPirClientClosure: (() -> TxidPirClient)?
+
+    func createTxidPirClient() -> TxidPirClient {
+        createTxidPirClientCallsCount += 1
+        if let closure = createTxidPirClientClosure {
+            return closure()
+        } else {
+            return createTxidPirClientReturnValue
+        }
+    }
+
 }
 class TransactionRepositoryMock: TransactionRepository {
 
@@ -3353,6 +3371,30 @@ class ZcashRustBackendWeldingMock: ZcashRustBackendWelding {
             return try await closure(txBytes, minedHeight)
         } else {
             return decryptAndStoreTransactionTxBytesMinedHeightReturnValue
+        }
+    }
+
+    // MARK: - decryptAndStorePirActions
+
+    var decryptAndStorePirActionsTxidMinedHeightActionsThrowableError: Error?
+    var decryptAndStorePirActionsTxidMinedHeightActionsCallsCount = 0
+    var decryptAndStorePirActionsTxidMinedHeightActionsCalled: Bool {
+        return decryptAndStorePirActionsTxidMinedHeightActionsCallsCount > 0
+    }
+    var decryptAndStorePirActionsTxidMinedHeightActionsReceivedArguments: (txid: Data, minedHeight: UInt32, actions: [Data])?
+    var decryptAndStorePirActionsTxidMinedHeightActionsReturnValue: Int32!
+    var decryptAndStorePirActionsTxidMinedHeightActionsClosure: ((Data, UInt32, [Data]) async throws -> Int32)?
+
+    func decryptAndStorePirActions(txid: Data, minedHeight: UInt32, actions: [Data]) async throws -> Int32 {
+        if let error = decryptAndStorePirActionsTxidMinedHeightActionsThrowableError {
+            throw error
+        }
+        decryptAndStorePirActionsTxidMinedHeightActionsCallsCount += 1
+        decryptAndStorePirActionsTxidMinedHeightActionsReceivedArguments = (txid: txid, minedHeight: minedHeight, actions: actions)
+        if let closure = decryptAndStorePirActionsTxidMinedHeightActionsClosure {
+            return try await closure(txid, minedHeight, actions)
+        } else {
+            return decryptAndStorePirActionsTxidMinedHeightActionsReturnValue
         }
     }
 
