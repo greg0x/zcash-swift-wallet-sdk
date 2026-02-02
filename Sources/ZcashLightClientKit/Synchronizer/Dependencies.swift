@@ -213,6 +213,16 @@ enum Dependencies {
             )
         }
         
+        // Register TxidPirClient if PIR enhancement is enabled
+        container.register(type: TxidPirClient?.self, isSingleton: true) { di in
+            guard config.pirConfig.isPirEnhanceEnabled else {
+                return nil
+            }
+            let service = di.resolve(LightWalletService.self)
+            let networkService = TxidNetworkService(service: service)
+            return TxidPirClient(networkService: networkService)
+        }
+
         container.register(type: BlockEnhancer.self, isSingleton: true) { di in
             let blockDownloaderService = di.resolve(BlockDownloaderService.self)
             let rustBackend = di.resolve(ZcashRustBackendWelding.self)
@@ -221,6 +231,7 @@ enum Dependencies {
             let service = di.resolve(LightWalletService.self)
             let logger = di.resolve(Logger.self)
             let sdkFlags = di.resolve(SDKFlags.self)
+            let txidPirClient = di.resolve(TxidPirClient?.self)
 
             return BlockEnhancerImpl(
                 blockDownloaderService: blockDownloaderService,
@@ -229,7 +240,9 @@ enum Dependencies {
                 metrics: metrics,
                 service: service,
                 logger: logger,
-                sdkFlags: sdkFlags
+                sdkFlags: sdkFlags,
+                txidPirClient: txidPirClient,
+                pirConfig: config.pirConfig
             )
         }
         

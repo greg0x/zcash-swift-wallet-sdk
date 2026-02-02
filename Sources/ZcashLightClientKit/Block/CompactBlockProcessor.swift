@@ -46,6 +46,34 @@ actor CompactBlockProcessor {
     
     private var compactBlockProgress: CompactBlockProgress = .zero
     
+    /// Configuration for PIR-based transaction enhancement.
+    ///
+    /// PIR (Private Information Retrieval) allows the wallet to fetch transaction data
+    /// without revealing which transaction it's interested in to the server.
+    public struct PirConfig {
+        /// Enable PIR for transaction enhancement (production flag).
+        /// When true, enhancement will attempt to use PIR instead of GetTransaction.
+        public var isPirEnhanceEnabled: Bool
+
+        /// DEBUG: Disable mempool sync to force enhancement path (testing only).
+        /// When true, all transactions go through block sync → enhancement → PIR
+        /// instead of receiving full data via mempool stream.
+        public var debugDisableMempoolSync: Bool
+
+        public init(
+            isPirEnhanceEnabled: Bool = false,
+            debugDisableMempoolSync: Bool = false
+        ) {
+            self.isPirEnhanceEnabled = isPirEnhanceEnabled
+            self.debugDisableMempoolSync = debugDisableMempoolSync
+        }
+
+        /// Default configuration with PIR disabled.
+        public static var `default`: PirConfig {
+            PirConfig()
+        }
+    }
+
     /// Compact Block Processor configuration
     ///
     /// - parameter fsBlockCacheRoot: absolute root path where the filesystem block cache will be stored.
@@ -72,6 +100,7 @@ actor CompactBlockProcessor {
         let network: ZcashNetwork
         let saplingActivation: BlockHeight
         let cacheDbURL: URL?
+        let pirConfig: PirConfig
         var blockPollInterval: TimeInterval {
             TimeInterval.random(in: ZcashSDK.defaultPollInterval / 2 ... ZcashSDK.defaultPollInterval * 1.5)
         }
@@ -92,7 +121,8 @@ actor CompactBlockProcessor {
             rewindDistance: Int = ZcashSDK.defaultRewindDistance,
             walletBirthdayProvider: @escaping () -> BlockHeight,
             saplingActivation: BlockHeight,
-            network: ZcashNetwork
+            network: ZcashNetwork,
+            pirConfig: PirConfig = .default
         ) {
             self.alias = alias
             self.fsBlockCacheRoot = fsBlockCacheRoot
@@ -110,6 +140,7 @@ actor CompactBlockProcessor {
             self.walletBirthdayProvider = walletBirthdayProvider
             self.saplingActivation = saplingActivation
             self.cacheDbURL = cacheDbURL
+            self.pirConfig = pirConfig
         }
 
         init(
@@ -126,7 +157,8 @@ actor CompactBlockProcessor {
             maxBackoffInterval: TimeInterval = ZcashSDK.defaultMaxBackOffInterval,
             rewindDistance: Int = ZcashSDK.defaultRewindDistance,
             walletBirthdayProvider: @escaping () -> BlockHeight,
-            network: ZcashNetwork
+            network: ZcashNetwork,
+            pirConfig: PirConfig = .default
         ) {
             self.alias = alias
             self.fsBlockCacheRoot = fsBlockCacheRoot
@@ -144,6 +176,7 @@ actor CompactBlockProcessor {
             self.retries = retries
             self.maxBackoffInterval = maxBackoffInterval
             self.rewindDistance = rewindDistance
+            self.pirConfig = pirConfig
         }
     }
 
@@ -281,9 +314,16 @@ extension CompactBlockProcessor {
         syncTask = Task(priority: .userInitiated) {
             await run()
         }
-        
-        mempoolDetectionTask = Task {
-            await watchMempool()
+
+        // Only start mempool sync if not disabled for PIR testing.
+        // When debugDisableMempoolSync is true, all transactions go through
+        // block sync → enhancement → PIR instead of receiving full data via mempool.
+        if !config.pirConfig.debugDisableMempoolSync {
+            mempoolDetectionTask = Task {
+                await watchMempool()
+            }
+        } else {
+            logger.info("Mempool sync disabled for PIR testing")
         }
     }
 
