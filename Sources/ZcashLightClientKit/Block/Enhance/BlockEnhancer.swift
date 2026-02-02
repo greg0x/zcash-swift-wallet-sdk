@@ -59,7 +59,7 @@ protocol BlockEnhancer {
     ) async throws -> [ZcashTransaction.Overview]?
 }
 
-struct BlockEnhancerImpl {
+actor BlockEnhancerImpl {
     let blockDownloaderService: BlockDownloaderService
     let rustBackend: ZcashRustBackendWelding
     let transactionRepository: TransactionRepository
@@ -69,6 +69,58 @@ struct BlockEnhancerImpl {
     let sdkFlags: SDKFlags
     let txidPirClient: TxidPirClient?
     let pirConfig: PirConfig
+
+    /// Tracks whether we've attempted to initialize the PIR client.
+    private var pirClientInitAttempted = false
+
+    init(
+        blockDownloaderService: BlockDownloaderService,
+        rustBackend: ZcashRustBackendWelding,
+        transactionRepository: TransactionRepository,
+        metrics: SDKMetrics,
+        service: LightWalletService,
+        logger: Logger,
+        sdkFlags: SDKFlags,
+        txidPirClient: TxidPirClient?,
+        pirConfig: PirConfig
+    ) {
+        self.blockDownloaderService = blockDownloaderService
+        self.rustBackend = rustBackend
+        self.transactionRepository = transactionRepository
+        self.metrics = metrics
+        self.service = service
+        self.logger = logger
+        self.sdkFlags = sdkFlags
+        self.txidPirClient = txidPirClient
+        self.pirConfig = pirConfig
+    }
+
+    /// Ensures PIR client is connected and ready. Only attempts once per session.
+    private func ensurePirClientReady() async {
+        guard pirConfig.isPirEnhanceEnabled,
+              let pirClient = txidPirClient,
+              !pirClientInitAttempted else {
+            return
+        }
+
+        pirClientInitAttempted = true
+
+        let currentState = await pirClient.state
+        guard !currentState.isReady else {
+            logger.info("[PIR] Client already ready")
+            return
+        }
+
+        logger.info("[PIR] Auto-initializing PIR client...")
+        do {
+            try await pirClient.connect()
+            logger.info("[PIR] Connected, precomputing keys...")
+            try await pirClient.precomputeKeys()
+            logger.info("[PIR] Client ready for PIR enhancement")
+        } catch {
+            logger.error("[PIR] Failed to initialize PIR client: \(error)")
+        }
+    }
 }
 
 extension BlockEnhancerImpl: BlockEnhancer {
@@ -78,6 +130,8 @@ extension BlockEnhancerImpl: BlockEnhancer {
         didEnhance: @escaping (EnhancementProgress) async -> Void,
         didPirEnhance: @escaping (PirEnhancementEvent) async -> Void
     ) async throws -> [ZcashTransaction.Overview]? {
+        // Ensure PIR client is initialized on first enhancement
+        await ensurePirClientReady()
         try Task.checkCancellation()
 
         logger.debug("Started Enhancing range: \(range)")
