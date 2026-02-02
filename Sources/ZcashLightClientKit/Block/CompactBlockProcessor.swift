@@ -580,6 +580,9 @@ extension CompactBlockProcessor {
 
         /// Event sent when the CompactBlockProcessor stops syncing.
         case stopped
+
+        /// Event sent when a transaction is enhanced via PIR or GetTransaction.
+        case pirEnhancement(PirEnhancementEvent)
     }
 
     func updateEventClosure(identifier: String, closure: @escaping (Event) async -> Void) async {

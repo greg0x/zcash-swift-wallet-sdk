@@ -80,6 +80,9 @@ extension EnhanceAction: Action {
                     if let foundTx = progress.lastFoundTransaction, progress.newlyMined {
                         await didUpdate(.minedTransaction(foundTx))
                     }
+                },
+                didPirEnhance: { pirEvent in
+                    await didUpdate(.pirEnhancement(pirEvent))
                 }
             )
 

@@ -295,6 +295,9 @@ public class SDKSynchronizer: Synchronizer {
 
             case .minedTransaction(let transaction):
                 self?.notifyMinedTransaction(transaction)
+
+            case .pirEnhancement(let pirEvent):
+                self?.notifyPirEnhancement(pirEvent)
             }
         }
 
@@ -1226,6 +1229,12 @@ public class SDKSynchronizer: Synchronizer {
     private func notifyMinedTransaction(_ transaction: ZcashTransaction.Overview) {
         streamsUpdateQueue.async { [weak self] in
             self?.eventSubject.send(.minedTransaction(transaction))
+        }
+    }
+
+    private func notifyPirEnhancement(_ pirEvent: PirEnhancementEvent) {
+        streamsUpdateQueue.async { [weak self] in
+            self?.eventSubject.send(.pirEnhancement(pirEvent))
         }
     }
 }

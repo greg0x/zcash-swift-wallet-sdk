@@ -77,6 +77,52 @@ public enum SynchronizerEvent {
     case storedUTXOs(_ inserted: [UnspentTransactionOutputEntity], _ skipped: [UnspentTransactionOutputEntity])
     // Connection state to LightwalletEndpoint changed.
     case connectionStateChanged(ConnectionState)
+    // Sent when a transaction is enhanced (either via PIR or GetTransaction).
+    case pirEnhancement(PirEnhancementEvent)
+}
+
+// MARK: - PIR Enhancement Events
+
+/// Method used for transaction enhancement.
+public enum PirEnhancementMethod: Equatable, Sendable {
+    /// PIR-based enhancement (privacy-preserving).
+    case pir
+    /// Legacy GetTransaction RPC (leaks txid to server).
+    case getTransaction
+    /// Fallback to GetTransaction after PIR failure.
+    case fallback
+}
+
+/// Event emitted when a transaction is enhanced.
+public struct PirEnhancementEvent: Equatable, Sendable {
+    /// Transaction ID that was enhanced.
+    public let txId: Data
+    /// Block height of the transaction.
+    public let blockHeight: UInt32
+    /// Method used for enhancement.
+    public let method: PirEnhancementMethod
+    /// Whether the enhancement was successful.
+    public let success: Bool
+    /// Number of Orchard actions in the transaction.
+    public let actionCount: Int
+    /// Total time for the enhancement in milliseconds (nil if not available).
+    public let timingMs: Double?
+
+    public init(
+        txId: Data,
+        blockHeight: UInt32,
+        method: PirEnhancementMethod,
+        success: Bool,
+        actionCount: Int,
+        timingMs: Double? = nil
+    ) {
+        self.txId = txId
+        self.blockHeight = blockHeight
+        self.method = method
+        self.success = success
+        self.actionCount = actionCount
+        self.timingMs = timingMs
+    }
 }
 
 /// Primary interface for interacting with the SDK. Defines the contract that specific

@@ -52,7 +52,11 @@ public struct EnhancementProgress: Equatable {
 }
 
 protocol BlockEnhancer {
-    func enhance(at range: CompactBlockRange, didEnhance: @escaping (EnhancementProgress) async -> Void) async throws -> [ZcashTransaction.Overview]?
+    func enhance(
+        at range: CompactBlockRange,
+        didEnhance: @escaping (EnhancementProgress) async -> Void,
+        didPirEnhance: @escaping (PirEnhancementEvent) async -> Void
+    ) async throws -> [ZcashTransaction.Overview]?
 }
 
 struct BlockEnhancerImpl {
@@ -69,7 +73,11 @@ struct BlockEnhancerImpl {
 
 extension BlockEnhancerImpl: BlockEnhancer {
     // swiftlint:disable:next cyclomatic_complexity function_body_length
-    func enhance(at range: CompactBlockRange, didEnhance: @escaping (EnhancementProgress) async -> Void) async throws -> [ZcashTransaction.Overview]? {
+    func enhance(
+        at range: CompactBlockRange,
+        didEnhance: @escaping (EnhancementProgress) async -> Void,
+        didPirEnhance: @escaping (PirEnhancementEvent) async -> Void
+    ) async throws -> [ZcashTransaction.Overview]? {
         try Task.checkCancellation()
 
         logger.debug("Started Enhancing range: \(range)")
@@ -112,21 +120,50 @@ extension BlockEnhancerImpl: BlockEnhancer {
                             if pirConfig.isPirEnhanceEnabled,
                                let pirClient = txidPirClient,
                                await pirClient.state.isReady {
-                                logger.info("Enhancement: Using PIR path for tx \(txId.data.hexEncodedString())")
+                                logger.info("[PIR] Using PIR path for tx \(txId.data.hexEncodedString())")
+                                let startTime = CFAbsoluteTimeGetCurrent()
                                 do {
-                                    try await enhanceViaPir(txId: txId.data, pirClient: pirClient)
+                                    let (blockHeight, actionCount) = try await enhanceViaPir(txId: txId.data, pirClient: pirClient)
                                     retry = false
+                                    let elapsedMs = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
+                                    await didPirEnhance(PirEnhancementEvent(
+                                        txId: txId.data,
+                                        blockHeight: blockHeight,
+                                        method: .pir,
+                                        success: true,
+                                        actionCount: actionCount,
+                                        timingMs: elapsedMs
+                                    ))
                                 } catch {
-                                    logger.warn("PIR enhancement failed, falling back to GetTransaction: \(error)")
+                                    logger.warn("[PIR] Fallback to GetTransaction: \(error)")
                                     // Fall through to legacy path
-                                    try await enhanceViaGetTransaction(txId: txId.data)
+                                    let (blockHeight, actionCount) = try await enhanceViaGetTransaction(txId: txId.data)
                                     retry = false
+                                    let elapsedMs = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
+                                    await didPirEnhance(PirEnhancementEvent(
+                                        txId: txId.data,
+                                        blockHeight: blockHeight,
+                                        method: .fallback,
+                                        success: true,
+                                        actionCount: actionCount,
+                                        timingMs: elapsedMs
+                                    ))
                                 }
                             } else {
                                 // Legacy path: GetTransaction (leaks txid to server)
-                                logger.info("Enhancement: Using GetTransaction path for tx \(txId.data.hexEncodedString())")
-                                try await enhanceViaGetTransaction(txId: txId.data)
+                                logger.info("[PIR] Using GetTransaction path for tx \(txId.data.hexEncodedString())")
+                                let startTime = CFAbsoluteTimeGetCurrent()
+                                let (blockHeight, actionCount) = try await enhanceViaGetTransaction(txId: txId.data)
                                 retry = false
+                                let elapsedMs = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
+                                await didPirEnhance(PirEnhancementEvent(
+                                    txId: txId.data,
+                                    blockHeight: blockHeight,
+                                    method: .getTransaction,
+                                    success: true,
+                                    actionCount: actionCount,
+                                    timingMs: elapsedMs
+                                ))
                             }
 
                         case .transactionsInvolvingAddress(let tia):
@@ -198,7 +235,8 @@ extension BlockEnhancerImpl: BlockEnhancer {
     // MARK: - Private Enhancement Methods
 
     /// Legacy enhancement via GetTransaction RPC (leaks txid to server).
-    private func enhanceViaGetTransaction(txId: Data) async throws {
+    /// - Returns: Tuple of (blockHeight, actionCount) for event emission.
+    private func enhanceViaGetTransaction(txId: Data) async throws -> (blockHeight: UInt32, actionCount: Int) {
         let response = try await blockDownloaderService.fetchTransaction(
             txId: txId,
             mode: await sdkFlags.ifTor(ServiceMode.txIdGroup(prefix: "fetch", txId: txId))
@@ -206,12 +244,18 @@ extension BlockEnhancerImpl: BlockEnhancer {
 
         if response.status == .txidNotRecognized {
             try await rustBackend.setTransactionStatus(txId: txId, status: .txidNotRecognized)
+            return (blockHeight: 0, actionCount: 0)
         } else if let fetchedTransaction = response.tx {
             _ = try await rustBackend.decryptAndStoreTransaction(
                 txBytes: fetchedTransaction.raw.bytes,
                 minedHeight: fetchedTransaction.minedHeight
             )
+            // Get action count from the transaction if available
+            let blockHeight = fetchedTransaction.minedHeight ?? 0
+            // Note: We don't have easy access to action count from raw tx, report 0
+            return (blockHeight: blockHeight, actionCount: 0)
         }
+        return (blockHeight: 0, actionCount: 0)
     }
 
     /// PIR-based enhancement (privacy-preserving).
@@ -226,17 +270,19 @@ extension BlockEnhancerImpl: BlockEnhancer {
     /// 4. Fetch compact block via GetBlock (leaks only block_height, not txid)
     /// 5. Extract compact actions for this transaction
     /// 6. Pass PIR data + compact data to Rust for trial decryption
-    private func enhanceViaPir(txId: Data, pirClient: TxidPirClient) async throws {
+    ///
+    /// - Returns: Tuple of (blockHeight, actionCount) for event emission.
+    private func enhanceViaPir(txId: Data, pirClient: TxidPirClient) async throws -> (blockHeight: UInt32, actionCount: Int) {
         // 1. Get transaction location from wallet DB
         let txOverview = try await transactionRepository.find(rawID: txId)
 
         guard let blockHeight = txOverview.minedHeight,
               let txIndex = txOverview.index else {
-            logger.warn("PIR: Transaction \(txId.hexEncodedString()) missing location info, falling back")
+            logger.warn("[PIR] Transaction \(txId.hexEncodedString()) missing location info, falling back")
             throw EnhanceError.missingTransactionLocation
         }
 
-        logger.debug("PIR: Enhancing tx at block \(blockHeight), index \(txIndex)")
+        logger.debug("[PIR] Enhancing tx at block \(blockHeight), index \(txIndex)")
 
         // 2. TX Lookup PIR query → get (startIndex, actionCount)
         let lookupResult = try await pirClient.queryTxLookup(
@@ -246,12 +292,12 @@ extension BlockEnhancerImpl: BlockEnhancer {
 
         guard let lookup = lookupResult.result else {
             // Transaction not in PIR DB (maybe too recent or outside DB range)
-            logger.info("PIR: Transaction not found in PIR DB, falling back to GetTransaction")
+            logger.info("[PIR] Transaction not found in PIR DB, falling back to GetTransaction")
             throw EnhanceError.transactionNotInPirDatabase
         }
 
-        logger.debug("PIR: TX lookup returned startIndex=\(lookup.startIndex), actionCount=\(lookup.actionCount)")
-        logger.debug("PIR: TX lookup timing - query=\(lookupResult.timing.queryGenMs)ms, network=\(lookupResult.timing.networkMs)ms, server=\(lookupResult.timing.serverMs)ms, decrypt=\(lookupResult.timing.decryptMs)ms")
+        logger.debug("[PIR] TX lookup: startIndex=\(lookup.startIndex), actionCount=\(lookup.actionCount)")
+        logger.debug("[PIR] TX lookup timing - query=\(lookupResult.timing.queryGenMs)ms, network=\(lookupResult.timing.networkMs)ms, server=\(lookupResult.timing.serverMs)ms, decrypt=\(lookupResult.timing.decryptMs)ms")
 
         // 3. Action Data PIR query → get encrypted action data
         let actionResult = try await pirClient.queryActionData(
@@ -259,8 +305,8 @@ extension BlockEnhancerImpl: BlockEnhancer {
             actionCount: lookup.actionCount
         )
 
-        logger.debug("PIR: Action data returned \(actionResult.actions.count) actions")
-        logger.debug("PIR: Action data timing - query=\(actionResult.timing.queryGenMs)ms, network=\(actionResult.timing.networkMs)ms, server=\(actionResult.timing.serverMs)ms, decrypt=\(actionResult.timing.decryptMs)ms")
+        logger.debug("[PIR] Action data: fetched \(actionResult.actions.count) actions")
+        logger.debug("[PIR] Action data timing - query=\(actionResult.timing.queryGenMs)ms, network=\(actionResult.timing.networkMs)ms, server=\(actionResult.timing.serverMs)ms, decrypt=\(actionResult.timing.decryptMs)ms")
 
         // 4. Fetch compact block via GetBlock (leaks only block_height, not txid)
         let compactBlock = try await fetchCompactBlock(height: blockHeight)
@@ -280,11 +326,11 @@ extension BlockEnhancerImpl: BlockEnhancer {
             )
         }
 
-        logger.debug("PIR: Extracted \(compactActions.count) compact actions from block")
+        logger.debug("[PIR] Extracted \(compactActions.count) compact actions from block")
 
         // Verify action counts match
         guard compactActions.count == actionResult.actions.count else {
-            logger.error("PIR: Action count mismatch - compact=\(compactActions.count), PIR=\(actionResult.actions.count)")
+            logger.error("[PIR] Action count mismatch - compact=\(compactActions.count), PIR=\(actionResult.actions.count)")
             throw EnhanceError.actionCountMismatch
         }
 
@@ -312,9 +358,9 @@ extension BlockEnhancerImpl: BlockEnhancer {
             mergedActions.append(action)
         }
 
-        logger.info("PIR: Successfully fetched data for \(mergedActions.count) actions via PIR")
-        logger.info("PIR: Bandwidth - TX lookup: \(lookupResult.bandwidth.uploadBytes)↑ \(lookupResult.bandwidth.downloadBytes)↓ bytes")
-        logger.info("PIR: Bandwidth - Action data: \(actionResult.bandwidth.uploadBytes)↑ \(actionResult.bandwidth.downloadBytes)↓ bytes")
+        logger.info("[PIR] Successfully fetched data for \(mergedActions.count) actions via PIR")
+        logger.info("[PIR] Bandwidth - TX lookup: \(lookupResult.bandwidth.uploadBytes)↑ \(lookupResult.bandwidth.downloadBytes)↓ bytes")
+        logger.info("[PIR] Bandwidth - Action data: \(actionResult.bandwidth.uploadBytes)↑ \(actionResult.bandwidth.downloadBytes)↓ bytes")
 
         // 7. Call Rust FFI for trial decryption and storage
         let decryptedCount = try await rustBackend.decryptAndStorePirActions(
@@ -323,7 +369,9 @@ extension BlockEnhancerImpl: BlockEnhancer {
             actions: mergedActions
         )
 
-        logger.info("PIR: Decrypted and stored \(decryptedCount) notes via PIR enhancement")
+        logger.info("[PIR] Decrypted \(decryptedCount) notes successfully")
+
+        return (blockHeight: UInt32(blockHeight), actionCount: mergedActions.count)
     }
 
     /// Fetch a single compact block by height.

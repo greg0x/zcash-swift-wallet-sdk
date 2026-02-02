@@ -70,7 +70,7 @@ final class EnhanceActionTests: ZcashTestCase {
             _ = try await enhanceAction.run(with: syncContext) { _ in }
             XCTFail("testEnhanceAction_LastScanHeightNil is expected to fail.")
         } catch ZcashError.compactBlockProcessorLastScannedHeight {
-            XCTAssertFalse(blockEnhancerMock.enhanceAtDidEnhanceCalled, "blockEnhancer.enhance() is not expected to be called.")
+            XCTAssertFalse(blockEnhancerMock.enhanceAtDidEnhanceDidPirEnhanceCalled, "blockEnhancer.enhance() is not expected to be called.")
         } catch {
             XCTFail("testEnhanceAction_LastScanHeightNil is not expected to fail. \(error)")
         }
@@ -86,7 +86,7 @@ final class EnhanceActionTests: ZcashTestCase {
 
         do {
             let nextContext = try await enhanceAction.run(with: syncContext) { _ in }
-            XCTAssertFalse(blockEnhancerMock.enhanceAtDidEnhanceCalled, "blockEnhancer.enhance() is not expected to be called.")
+            XCTAssertFalse(blockEnhancerMock.enhanceAtDidEnhanceDidPirEnhanceCalled, "blockEnhancer.enhance() is not expected to be called.")
             
             let acResult = nextContext.checkStateIs(.clearCache)
             XCTAssertTrue(acResult == .true, "Check of state failed with '\(acResult)'")
@@ -110,7 +110,7 @@ final class EnhanceActionTests: ZcashTestCase {
 
         do {
             _ = try await enhanceAction.run(with: syncContext) { _ in }
-            XCTAssertFalse(blockEnhancerMock.enhanceAtDidEnhanceCalled, "blockEnhancer.enhance() is not expected to be called.")
+            XCTAssertFalse(blockEnhancerMock.enhanceAtDidEnhanceDidPirEnhanceCalled, "blockEnhancer.enhance() is not expected to be called.")
         } catch {
             XCTFail("testEnhanceAction_NoEnhanceRange is not expected to fail. \(error)")
         }
@@ -132,7 +132,7 @@ final class EnhanceActionTests: ZcashTestCase {
 
         do {
             _ = try await enhanceAction.run(with: syncContext) { _ in }
-            XCTAssertFalse(blockEnhancerMock.enhanceAtDidEnhanceCalled, "blockEnhancer.enhance() is not expected to be called.")
+            XCTAssertFalse(blockEnhancerMock.enhanceAtDidEnhanceDidPirEnhanceCalled, "blockEnhancer.enhance() is not expected to be called.")
         } catch {
             XCTFail("testEnhanceAction_1000BlocksConditionNotFulfilled is not expected to fail. \(error)")
         }
@@ -162,7 +162,7 @@ final class EnhanceActionTests: ZcashTestCase {
             totalReceived: nil
         )
         
-        blockEnhancerMock.enhanceAtDidEnhanceClosure = { _, didEnhance in
+        blockEnhancerMock.enhanceAtDidEnhanceDidPirEnhanceClosure = { _, didEnhance, _ in
             await didEnhance(EnhancementProgress.zero)
             return [transaction]
         }
@@ -222,7 +222,7 @@ final class EnhanceActionTests: ZcashTestCase {
             totalReceived: nil
         )
         
-        blockEnhancerMock.enhanceAtDidEnhanceClosure = { _, didEnhance in
+        blockEnhancerMock.enhanceAtDidEnhanceDidPirEnhanceClosure = { _, didEnhance, _ in
             await didEnhance(
                 EnhancementProgress(
                     totalTransactions: 0,
@@ -286,7 +286,7 @@ final class EnhanceActionTests: ZcashTestCase {
             totalReceived: nil
         )
 
-        blockEnhancerMock.enhanceAtDidEnhanceClosure = { _, didEnhance in
+        blockEnhancerMock.enhanceAtDidEnhanceDidPirEnhanceClosure = { _, didEnhance, _ in
             await didEnhance(
                 EnhancementProgress(
                     totalTransactions: 0,

@@ -482,25 +482,29 @@ class BlockEnhancerMock: BlockEnhancer {
 
     // MARK: - enhance
 
-    var enhanceAtDidEnhanceThrowableError: Error?
-    var enhanceAtDidEnhanceCallsCount = 0
-    var enhanceAtDidEnhanceCalled: Bool {
-        return enhanceAtDidEnhanceCallsCount > 0
+    var enhanceAtDidEnhanceDidPirEnhanceThrowableError: Error?
+    var enhanceAtDidEnhanceDidPirEnhanceCallsCount = 0
+    var enhanceAtDidEnhanceDidPirEnhanceCalled: Bool {
+        return enhanceAtDidEnhanceDidPirEnhanceCallsCount > 0
     }
-    var enhanceAtDidEnhanceReceivedArguments: (range: CompactBlockRange, didEnhance: (EnhancementProgress) async -> Void)?
-    var enhanceAtDidEnhanceReturnValue: [ZcashTransaction.Overview]?
-    var enhanceAtDidEnhanceClosure: ((CompactBlockRange, @escaping (EnhancementProgress) async -> Void) async throws -> [ZcashTransaction.Overview]?)?
+    var enhanceAtDidEnhanceDidPirEnhanceReceivedArguments: (range: CompactBlockRange, didEnhance: (EnhancementProgress) async -> Void, didPirEnhance: (PirEnhancementEvent) async -> Void)?
+    var enhanceAtDidEnhanceDidPirEnhanceReturnValue: [ZcashTransaction.Overview]?
+    var enhanceAtDidEnhanceDidPirEnhanceClosure: ((CompactBlockRange, @escaping (EnhancementProgress) async -> Void, @escaping (PirEnhancementEvent) async -> Void) async throws -> [ZcashTransaction.Overview]?)?
 
-    func enhance(at range: CompactBlockRange, didEnhance: @escaping (EnhancementProgress) async -> Void) async throws -> [ZcashTransaction.Overview]? {
-        if let error = enhanceAtDidEnhanceThrowableError {
+    func enhance(
+        at range: CompactBlockRange,
+        didEnhance: @escaping (EnhancementProgress) async -> Void,
+        didPirEnhance: @escaping (PirEnhancementEvent) async -> Void
+    ) async throws -> [ZcashTransaction.Overview]? {
+        if let error = enhanceAtDidEnhanceDidPirEnhanceThrowableError {
             throw error
         }
-        enhanceAtDidEnhanceCallsCount += 1
-        enhanceAtDidEnhanceReceivedArguments = (range: range, didEnhance: didEnhance)
-        if let closure = enhanceAtDidEnhanceClosure {
-            return try await closure(range, didEnhance)
+        enhanceAtDidEnhanceDidPirEnhanceCallsCount += 1
+        enhanceAtDidEnhanceDidPirEnhanceReceivedArguments = (range: range, didEnhance: didEnhance, didPirEnhance: didPirEnhance)
+        if let closure = enhanceAtDidEnhanceDidPirEnhanceClosure {
+            return try await closure(range, didEnhance, didPirEnhance)
         } else {
-            return enhanceAtDidEnhanceReturnValue
+            return enhanceAtDidEnhanceDidPirEnhanceReturnValue
         }
     }
 
