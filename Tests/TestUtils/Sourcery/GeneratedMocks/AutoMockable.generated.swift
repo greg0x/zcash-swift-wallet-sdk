@@ -2716,21 +2716,21 @@ class SynchronizerMock: Synchronizer {
         }
     }
 
-    // MARK: - createTxidPirClient
+    // MARK: - getTxidPirClient
 
-    var createTxidPirClientCallsCount = 0
-    var createTxidPirClientCalled: Bool {
-        return createTxidPirClientCallsCount > 0
+    var getTxidPirClientCallsCount = 0
+    var getTxidPirClientCalled: Bool {
+        return getTxidPirClientCallsCount > 0
     }
-    var createTxidPirClientReturnValue: TxidPirClient!
-    var createTxidPirClientClosure: (() -> TxidPirClient)?
+    var getTxidPirClientReturnValue: TxidPirClient?
+    var getTxidPirClientClosure: (() -> TxidPirClient?)?
 
-    func createTxidPirClient() -> TxidPirClient {
-        createTxidPirClientCallsCount += 1
-        if let closure = createTxidPirClientClosure {
+    func getTxidPirClient() -> TxidPirClient? {
+        getTxidPirClientCallsCount += 1
+        if let closure = getTxidPirClientClosure {
             return closure()
         } else {
-            return createTxidPirClientReturnValue
+            return getTxidPirClientReturnValue
         }
     }
 

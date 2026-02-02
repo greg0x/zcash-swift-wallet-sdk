@@ -1287,10 +1287,9 @@ extension SDKSynchronizer {
     /// The Txid PIR client enables privacy-preserving transaction lookups by block height
     /// and tx index, as well as action data retrieval.
     ///
-    /// - Returns: A new `TxidPirClient` configured to use this synchronizer's connection.
-    public func createTxidPirClient() -> TxidPirClient {
-        let networkService = TxidNetworkService(service: initializer.lightWalletService)
-        return TxidPirClient(networkService: networkService)
+    /// - Returns: The shared `TxidPirClient` used by BlockEnhancer, or nil if PIR is disabled.
+    public func getTxidPirClient() -> TxidPirClient? {
+        initializer.container.resolve(TxidPirClient?.self)
     }
 }
 
