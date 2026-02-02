@@ -660,6 +660,12 @@ public struct CuckooParams: @unchecked Sendable {
   /// Number of hash functions used
   public var numHashFunctions: UInt32 = 0
 
+  /// Size of each value in bytes (for txid PIR)
+  public var valueSize: UInt32 = 0
+
+  /// Size of each entry in bytes (for txid PIR)
+  public var entrySize: UInt32 = 0
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -897,6 +903,224 @@ public struct PirStatusResponse: Sendable {
 
   /// Timestamp of the last successful database build (ISO 8601)
   public var lastBuildTime: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request for txid lookup PIR parameters
+public struct TxidLookupParamsRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response containing txid lookup PIR parameters
+public struct TxidLookupParamsResponse: @unchecked Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Database version for cache invalidation
+  public var dbVersion: UInt64 {
+    get {return _storage._dbVersion}
+    set {_uniqueStorage()._dbVersion = newValue}
+  }
+
+  /// First block height in PIR database
+  public var startHeight: UInt32 {
+    get {return _storage._startHeight}
+    set {_uniqueStorage()._startHeight = newValue}
+  }
+
+  /// Last block height in PIR database
+  public var endHeight: UInt32 {
+    get {return _storage._endHeight}
+    set {_uniqueStorage()._endHeight = newValue}
+  }
+
+  /// Total transactions in database
+  public var txCount: UInt64 {
+    get {return _storage._txCount}
+    set {_uniqueStorage()._txCount = newValue}
+  }
+
+  /// PIR factor parameter
+  public var factor: UInt64 {
+    get {return _storage._factor}
+    set {_uniqueStorage()._factor = newValue}
+  }
+
+  /// Size of each record in bytes
+  public var recordSize: UInt64 {
+    get {return _storage._recordSize}
+    set {_uniqueStorage()._recordSize = newValue}
+  }
+
+  /// InsPIRe parameters (reused from nullifier PIR)
+  public var inspire: InspireParams {
+    get {return _storage._inspire ?? InspireParams()}
+    set {_uniqueStorage()._inspire = newValue}
+  }
+  /// Returns true if `inspire` has been explicitly set.
+  public var hasInspire: Bool {return _storage._inspire != nil}
+  /// Clears the value of `inspire`. Subsequent reads from it will return its default value.
+  public mutating func clearInspire() {_uniqueStorage()._inspire = nil}
+
+  /// Cuckoo hash parameters (reused from nullifier PIR)
+  public var cuckoo: CuckooParams {
+    get {return _storage._cuckoo ?? CuckooParams()}
+    set {_uniqueStorage()._cuckoo = newValue}
+  }
+  /// Returns true if `cuckoo` has been explicitly set.
+  public var hasCuckoo: Bool {return _storage._cuckoo != nil}
+  /// Clears the value of `cuckoo`. Subsequent reads from it will return its default value.
+  public mutating func clearCuckoo() {_uniqueStorage()._cuckoo = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _storage = _StorageClass.defaultInstance
+}
+
+/// Request for action data PIR parameters
+public struct ActionDataParamsRequest: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response containing action data PIR parameters
+public struct ActionDataParamsResponse: @unchecked Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Database version for cache invalidation
+  public var dbVersion: UInt64 {
+    get {return _storage._dbVersion}
+    set {_uniqueStorage()._dbVersion = newValue}
+  }
+
+  /// First block height in PIR database
+  public var startHeight: UInt32 {
+    get {return _storage._startHeight}
+    set {_uniqueStorage()._startHeight = newValue}
+  }
+
+  /// Last block height in PIR database
+  public var endHeight: UInt32 {
+    get {return _storage._endHeight}
+    set {_uniqueStorage()._endHeight = newValue}
+  }
+
+  /// Total actions in database
+  public var actionCount: UInt64 {
+    get {return _storage._actionCount}
+    set {_uniqueStorage()._actionCount = newValue}
+  }
+
+  /// Column height for SimplePIR
+  public var columnHeight: UInt64 {
+    get {return _storage._columnHeight}
+    set {_uniqueStorage()._columnHeight = newValue}
+  }
+
+  /// PIR factor parameter
+  public var factor: UInt64 {
+    get {return _storage._factor}
+    set {_uniqueStorage()._factor = newValue}
+  }
+
+  /// Size of each record in bytes (640 for now)
+  public var recordSize: UInt64 {
+    get {return _storage._recordSize}
+    set {_uniqueStorage()._recordSize = newValue}
+  }
+
+  /// InsPIRe parameters
+  public var inspire: InspireParams {
+    get {return _storage._inspire ?? InspireParams()}
+    set {_uniqueStorage()._inspire = newValue}
+  }
+  /// Returns true if `inspire` has been explicitly set.
+  public var hasInspire: Bool {return _storage._inspire != nil}
+  /// Clears the value of `inspire`. Subsequent reads from it will return its default value.
+  public mutating func clearInspire() {_uniqueStorage()._inspire = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _storage = _StorageClass.defaultInstance
+}
+
+/// Request to execute a txid lookup PIR query
+public struct TxidLookupQueryRequest: @unchecked Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Encrypted PIR query
+  public var queryData: Data = Data()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from a txid lookup PIR query
+public struct TxidLookupQueryResponse: @unchecked Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Encrypted PIR response
+  public var responseData: Data = Data()
+
+  /// Server processing time for diagnostics
+  public var serverTimeMs: Double = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Request to execute an action data PIR query
+public struct ActionDataQueryRequest: @unchecked Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Encrypted PIR query
+  public var queryData: Data = Data()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+/// Response from an action data PIR query
+public struct ActionDataQueryResponse: @unchecked Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  /// Encrypted PIR response
+  public var responseData: Data = Data()
+
+  /// Server processing time for diagnostics
+  public var serverTimeMs: Double = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -1939,6 +2163,8 @@ extension CuckooParams: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
     2: .same(proto: "bucketSize"),
     3: .same(proto: "hashSeed"),
     4: .same(proto: "numHashFunctions"),
+    5: .same(proto: "valueSize"),
+    6: .same(proto: "entrySize"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -1951,6 +2177,8 @@ extension CuckooParams: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
       case 2: try { try decoder.decodeSingularUInt32Field(value: &self.bucketSize) }()
       case 3: try { try decoder.decodeSingularBytesField(value: &self.hashSeed) }()
       case 4: try { try decoder.decodeSingularUInt32Field(value: &self.numHashFunctions) }()
+      case 5: try { try decoder.decodeSingularUInt32Field(value: &self.valueSize) }()
+      case 6: try { try decoder.decodeSingularUInt32Field(value: &self.entrySize) }()
       default: break
       }
     }
@@ -1969,6 +2197,12 @@ extension CuckooParams: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
     if self.numHashFunctions != 0 {
       try visitor.visitSingularUInt32Field(value: self.numHashFunctions, fieldNumber: 4)
     }
+    if self.valueSize != 0 {
+      try visitor.visitSingularUInt32Field(value: self.valueSize, fieldNumber: 5)
+    }
+    if self.entrySize != 0 {
+      try visitor.visitSingularUInt32Field(value: self.entrySize, fieldNumber: 6)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -1977,6 +2211,8 @@ extension CuckooParams: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementat
     if lhs.bucketSize != rhs.bucketSize {return false}
     if lhs.hashSeed != rhs.hashSeed {return false}
     if lhs.numHashFunctions != rhs.numHashFunctions {return false}
+    if lhs.valueSize != rhs.valueSize {return false}
+    if lhs.entrySize != rhs.entrySize {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -2468,6 +2704,448 @@ extension PirStatusResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplem
     if lhs.numBuckets != rhs.numBuckets {return false}
     if lhs.rebuildInProgress != rhs.rebuildInProgress {return false}
     if lhs.lastBuildTime != rhs.lastBuildTime {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension TxidLookupParamsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".TxidLookupParamsRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap()
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    // Load everything into unknown fields
+    while try decoder.nextFieldNumber() != nil {}
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: TxidLookupParamsRequest, rhs: TxidLookupParamsRequest) -> Bool {
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension TxidLookupParamsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".TxidLookupParamsResponse"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .standard(proto: "db_version"),
+    2: .standard(proto: "start_height"),
+    3: .standard(proto: "end_height"),
+    4: .standard(proto: "tx_count"),
+    5: .same(proto: "factor"),
+    6: .standard(proto: "record_size"),
+    7: .same(proto: "inspire"),
+    8: .same(proto: "cuckoo"),
+  ]
+
+  fileprivate class _StorageClass {
+    var _dbVersion: UInt64 = 0
+    var _startHeight: UInt32 = 0
+    var _endHeight: UInt32 = 0
+    var _txCount: UInt64 = 0
+    var _factor: UInt64 = 0
+    var _recordSize: UInt64 = 0
+    var _inspire: InspireParams? = nil
+    var _cuckoo: CuckooParams? = nil
+
+    #if swift(>=5.10)
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+    #else
+      static let defaultInstance = _StorageClass()
+    #endif
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _dbVersion = source._dbVersion
+      _startHeight = source._startHeight
+      _endHeight = source._endHeight
+      _txCount = source._txCount
+      _factor = source._factor
+      _recordSize = source._recordSize
+      _inspire = source._inspire
+      _cuckoo = source._cuckoo
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularUInt64Field(value: &_storage._dbVersion) }()
+        case 2: try { try decoder.decodeSingularUInt32Field(value: &_storage._startHeight) }()
+        case 3: try { try decoder.decodeSingularUInt32Field(value: &_storage._endHeight) }()
+        case 4: try { try decoder.decodeSingularUInt64Field(value: &_storage._txCount) }()
+        case 5: try { try decoder.decodeSingularUInt64Field(value: &_storage._factor) }()
+        case 6: try { try decoder.decodeSingularUInt64Field(value: &_storage._recordSize) }()
+        case 7: try { try decoder.decodeSingularMessageField(value: &_storage._inspire) }()
+        case 8: try { try decoder.decodeSingularMessageField(value: &_storage._cuckoo) }()
+        default: break
+        }
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      if _storage._dbVersion != 0 {
+        try visitor.visitSingularUInt64Field(value: _storage._dbVersion, fieldNumber: 1)
+      }
+      if _storage._startHeight != 0 {
+        try visitor.visitSingularUInt32Field(value: _storage._startHeight, fieldNumber: 2)
+      }
+      if _storage._endHeight != 0 {
+        try visitor.visitSingularUInt32Field(value: _storage._endHeight, fieldNumber: 3)
+      }
+      if _storage._txCount != 0 {
+        try visitor.visitSingularUInt64Field(value: _storage._txCount, fieldNumber: 4)
+      }
+      if _storage._factor != 0 {
+        try visitor.visitSingularUInt64Field(value: _storage._factor, fieldNumber: 5)
+      }
+      if _storage._recordSize != 0 {
+        try visitor.visitSingularUInt64Field(value: _storage._recordSize, fieldNumber: 6)
+      }
+      try { if let v = _storage._inspire {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+      } }()
+      try { if let v = _storage._cuckoo {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
+      } }()
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: TxidLookupParamsResponse, rhs: TxidLookupParamsResponse) -> Bool {
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._dbVersion != rhs_storage._dbVersion {return false}
+        if _storage._startHeight != rhs_storage._startHeight {return false}
+        if _storage._endHeight != rhs_storage._endHeight {return false}
+        if _storage._txCount != rhs_storage._txCount {return false}
+        if _storage._factor != rhs_storage._factor {return false}
+        if _storage._recordSize != rhs_storage._recordSize {return false}
+        if _storage._inspire != rhs_storage._inspire {return false}
+        if _storage._cuckoo != rhs_storage._cuckoo {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension ActionDataParamsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ActionDataParamsRequest"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap()
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    // Load everything into unknown fields
+    while try decoder.nextFieldNumber() != nil {}
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: ActionDataParamsRequest, rhs: ActionDataParamsRequest) -> Bool {
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension ActionDataParamsResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ActionDataParamsResponse"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .standard(proto: "db_version"),
+    2: .standard(proto: "start_height"),
+    3: .standard(proto: "end_height"),
+    4: .standard(proto: "action_count"),
+    5: .standard(proto: "column_height"),
+    6: .same(proto: "factor"),
+    7: .standard(proto: "record_size"),
+    8: .same(proto: "inspire"),
+  ]
+
+  fileprivate class _StorageClass {
+    var _dbVersion: UInt64 = 0
+    var _startHeight: UInt32 = 0
+    var _endHeight: UInt32 = 0
+    var _actionCount: UInt64 = 0
+    var _columnHeight: UInt64 = 0
+    var _factor: UInt64 = 0
+    var _recordSize: UInt64 = 0
+    var _inspire: InspireParams? = nil
+
+    #if swift(>=5.10)
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+    #else
+      static let defaultInstance = _StorageClass()
+    #endif
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _dbVersion = source._dbVersion
+      _startHeight = source._startHeight
+      _endHeight = source._endHeight
+      _actionCount = source._actionCount
+      _columnHeight = source._columnHeight
+      _factor = source._factor
+      _recordSize = source._recordSize
+      _inspire = source._inspire
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularUInt64Field(value: &_storage._dbVersion) }()
+        case 2: try { try decoder.decodeSingularUInt32Field(value: &_storage._startHeight) }()
+        case 3: try { try decoder.decodeSingularUInt32Field(value: &_storage._endHeight) }()
+        case 4: try { try decoder.decodeSingularUInt64Field(value: &_storage._actionCount) }()
+        case 5: try { try decoder.decodeSingularUInt64Field(value: &_storage._columnHeight) }()
+        case 6: try { try decoder.decodeSingularUInt64Field(value: &_storage._factor) }()
+        case 7: try { try decoder.decodeSingularUInt64Field(value: &_storage._recordSize) }()
+        case 8: try { try decoder.decodeSingularMessageField(value: &_storage._inspire) }()
+        default: break
+        }
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      if _storage._dbVersion != 0 {
+        try visitor.visitSingularUInt64Field(value: _storage._dbVersion, fieldNumber: 1)
+      }
+      if _storage._startHeight != 0 {
+        try visitor.visitSingularUInt32Field(value: _storage._startHeight, fieldNumber: 2)
+      }
+      if _storage._endHeight != 0 {
+        try visitor.visitSingularUInt32Field(value: _storage._endHeight, fieldNumber: 3)
+      }
+      if _storage._actionCount != 0 {
+        try visitor.visitSingularUInt64Field(value: _storage._actionCount, fieldNumber: 4)
+      }
+      if _storage._columnHeight != 0 {
+        try visitor.visitSingularUInt64Field(value: _storage._columnHeight, fieldNumber: 5)
+      }
+      if _storage._factor != 0 {
+        try visitor.visitSingularUInt64Field(value: _storage._factor, fieldNumber: 6)
+      }
+      if _storage._recordSize != 0 {
+        try visitor.visitSingularUInt64Field(value: _storage._recordSize, fieldNumber: 7)
+      }
+      try { if let v = _storage._inspire {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
+      } }()
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: ActionDataParamsResponse, rhs: ActionDataParamsResponse) -> Bool {
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._dbVersion != rhs_storage._dbVersion {return false}
+        if _storage._startHeight != rhs_storage._startHeight {return false}
+        if _storage._endHeight != rhs_storage._endHeight {return false}
+        if _storage._actionCount != rhs_storage._actionCount {return false}
+        if _storage._columnHeight != rhs_storage._columnHeight {return false}
+        if _storage._factor != rhs_storage._factor {return false}
+        if _storage._recordSize != rhs_storage._recordSize {return false}
+        if _storage._inspire != rhs_storage._inspire {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension TxidLookupQueryRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".TxidLookupQueryRequest"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .standard(proto: "query_data"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBytesField(value: &self.queryData) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.queryData.isEmpty {
+      try visitor.visitSingularBytesField(value: self.queryData, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: TxidLookupQueryRequest, rhs: TxidLookupQueryRequest) -> Bool {
+    if lhs.queryData != rhs.queryData {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension TxidLookupQueryResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".TxidLookupQueryResponse"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .standard(proto: "response_data"),
+    2: .standard(proto: "server_time_ms"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBytesField(value: &self.responseData) }()
+      case 2: try { try decoder.decodeSingularDoubleField(value: &self.serverTimeMs) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.responseData.isEmpty {
+      try visitor.visitSingularBytesField(value: self.responseData, fieldNumber: 1)
+    }
+    if self.serverTimeMs.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.serverTimeMs, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: TxidLookupQueryResponse, rhs: TxidLookupQueryResponse) -> Bool {
+    if lhs.responseData != rhs.responseData {return false}
+    if lhs.serverTimeMs != rhs.serverTimeMs {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension ActionDataQueryRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ActionDataQueryRequest"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .standard(proto: "query_data"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBytesField(value: &self.queryData) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.queryData.isEmpty {
+      try visitor.visitSingularBytesField(value: self.queryData, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: ActionDataQueryRequest, rhs: ActionDataQueryRequest) -> Bool {
+    if lhs.queryData != rhs.queryData {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension ActionDataQueryResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ActionDataQueryResponse"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .standard(proto: "response_data"),
+    2: .standard(proto: "server_time_ms"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularBytesField(value: &self.responseData) }()
+      case 2: try { try decoder.decodeSingularDoubleField(value: &self.serverTimeMs) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.responseData.isEmpty {
+      try visitor.visitSingularBytesField(value: self.responseData, fieldNumber: 1)
+    }
+    if self.serverTimeMs.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.serverTimeMs, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: ActionDataQueryResponse, rhs: ActionDataQueryResponse) -> Bool {
+    if lhs.responseData != rhs.responseData {return false}
+    if lhs.serverTimeMs != rhs.serverTimeMs {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

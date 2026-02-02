@@ -76,6 +76,18 @@ public enum ZcashError: Equatable, Error {
     /// LightWalletService.getPirStatus failed.
     /// ZSRVC0014
     case serviceGetPirStatusFailed(_ error: LightWalletServiceError)
+    /// LightWalletService.getTxidLookupParams failed.
+    /// ZSRVC0015
+    case serviceGetTxidLookupParamsFailed(_ error: LightWalletServiceError)
+    /// LightWalletService.txidLookupQuery failed.
+    /// ZSRVC0016
+    case serviceTxidLookupQueryFailed(_ error: LightWalletServiceError)
+    /// LightWalletService.getActionDataParams failed.
+    /// ZSRVC0017
+    case serviceGetActionDataParamsFailed(_ error: LightWalletServiceError)
+    /// LightWalletService.actionDataQuery failed.
+    /// ZSRVC0018
+    case serviceActionDataQueryFailed(_ error: LightWalletServiceError)
     /// Endpoint is not provided
     /// ZTSRV0001
     case torServiceMissingEndpoint
@@ -788,6 +800,10 @@ public enum ZcashError: Equatable, Error {
         case .serviceGetPirParamsFailed: return "LightWalletService.getPirParams failed."
         case .serviceInspireQueryFailed: return "LightWalletService.inspireQuery failed."
         case .serviceGetPirStatusFailed: return "LightWalletService.getPirStatus failed."
+        case .serviceGetTxidLookupParamsFailed: return "LightWalletService.getTxidLookupParams failed."
+        case .serviceTxidLookupQueryFailed: return "LightWalletService.txidLookupQuery failed."
+        case .serviceGetActionDataParamsFailed: return "LightWalletService.getActionDataParams failed."
+        case .serviceActionDataQueryFailed: return "LightWalletService.actionDataQuery failed."
         case .torServiceMissingEndpoint: return "Endpoint is not provided"
         case .torServiceUnresolvedMode: return "Tor client fails to resolve ServiceMode"
         case .grpcServiceCalledWithTorMode: return "GRPC Service is called with a Tor mode instead of direct one"
@@ -1008,6 +1024,10 @@ public enum ZcashError: Equatable, Error {
         case .serviceGetPirParamsFailed: return .serviceGetPirParamsFailed
         case .serviceInspireQueryFailed: return .serviceInspireQueryFailed
         case .serviceGetPirStatusFailed: return .serviceGetPirStatusFailed
+        case .serviceGetTxidLookupParamsFailed: return .serviceGetTxidLookupParamsFailed
+        case .serviceTxidLookupQueryFailed: return .serviceTxidLookupQueryFailed
+        case .serviceGetActionDataParamsFailed: return .serviceGetActionDataParamsFailed
+        case .serviceActionDataQueryFailed: return .serviceActionDataQueryFailed
         case .torServiceMissingEndpoint: return .torServiceMissingEndpoint
         case .torServiceUnresolvedMode: return .torServiceUnresolvedMode
         case .grpcServiceCalledWithTorMode: return .grpcServiceCalledWithTorMode

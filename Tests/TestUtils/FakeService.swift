@@ -125,4 +125,20 @@ class MockLightWalletService: LightWalletService {
     func getPirStatus(mode: ServiceMode) async throws -> PirStatusResponse {
         throw ZcashError.serviceGetInfoFailed(.generalError(message: "PIR not implemented in mock"))
     }
+
+    func getTxidLookupParams(mode: ServiceMode) async throws -> TxidLookupParamsResponse {
+        throw ZcashError.serviceGetInfoFailed(.generalError(message: "PIR not implemented in mock"))
+    }
+
+    func txidLookupQuery(_ query: Data, mode: ServiceMode) async throws -> TxidLookupQueryResponse {
+        throw ZcashError.serviceGetInfoFailed(.generalError(message: "PIR not implemented in mock"))
+    }
+
+    func getActionDataParams(mode: ServiceMode) async throws -> ActionDataParamsResponse {
+        throw ZcashError.serviceGetInfoFailed(.generalError(message: "PIR not implemented in mock"))
+    }
+
+    func actionDataQuery(_ query: Data, mode: ServiceMode) async throws -> ActionDataQueryResponse {
+        throw ZcashError.serviceGetInfoFailed(.generalError(message: "PIR not implemented in mock"))
+    }
 }

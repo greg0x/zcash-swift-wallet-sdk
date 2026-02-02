@@ -1226,6 +1226,102 @@ class LightWalletServiceMock: LightWalletService {
         }
     }
 
+    // MARK: - getTxidLookupParams
+
+    var getTxidLookupParamsModeThrowableError: Error?
+    var getTxidLookupParamsModeCallsCount = 0
+    var getTxidLookupParamsModeCalled: Bool {
+        return getTxidLookupParamsModeCallsCount > 0
+    }
+    var getTxidLookupParamsModeReceivedMode: ServiceMode?
+    var getTxidLookupParamsModeReturnValue: TxidLookupParamsResponse!
+    var getTxidLookupParamsModeClosure: ((ServiceMode) async throws -> TxidLookupParamsResponse)?
+
+    func getTxidLookupParams(mode: ServiceMode) async throws -> TxidLookupParamsResponse {
+        if let error = getTxidLookupParamsModeThrowableError {
+            throw error
+        }
+        getTxidLookupParamsModeCallsCount += 1
+        getTxidLookupParamsModeReceivedMode = mode
+        if let closure = getTxidLookupParamsModeClosure {
+            return try await closure(mode)
+        } else {
+            return getTxidLookupParamsModeReturnValue
+        }
+    }
+
+    // MARK: - txidLookupQuery
+
+    var txidLookupQueryModeThrowableError: Error?
+    var txidLookupQueryModeCallsCount = 0
+    var txidLookupQueryModeCalled: Bool {
+        return txidLookupQueryModeCallsCount > 0
+    }
+    var txidLookupQueryModeReceivedArguments: (query: Data, mode: ServiceMode)?
+    var txidLookupQueryModeReturnValue: TxidLookupQueryResponse!
+    var txidLookupQueryModeClosure: ((Data, ServiceMode) async throws -> TxidLookupQueryResponse)?
+
+    func txidLookupQuery(_ query: Data, mode: ServiceMode) async throws -> TxidLookupQueryResponse {
+        if let error = txidLookupQueryModeThrowableError {
+            throw error
+        }
+        txidLookupQueryModeCallsCount += 1
+        txidLookupQueryModeReceivedArguments = (query: query, mode: mode)
+        if let closure = txidLookupQueryModeClosure {
+            return try await closure(query, mode)
+        } else {
+            return txidLookupQueryModeReturnValue
+        }
+    }
+
+    // MARK: - getActionDataParams
+
+    var getActionDataParamsModeThrowableError: Error?
+    var getActionDataParamsModeCallsCount = 0
+    var getActionDataParamsModeCalled: Bool {
+        return getActionDataParamsModeCallsCount > 0
+    }
+    var getActionDataParamsModeReceivedMode: ServiceMode?
+    var getActionDataParamsModeReturnValue: ActionDataParamsResponse!
+    var getActionDataParamsModeClosure: ((ServiceMode) async throws -> ActionDataParamsResponse)?
+
+    func getActionDataParams(mode: ServiceMode) async throws -> ActionDataParamsResponse {
+        if let error = getActionDataParamsModeThrowableError {
+            throw error
+        }
+        getActionDataParamsModeCallsCount += 1
+        getActionDataParamsModeReceivedMode = mode
+        if let closure = getActionDataParamsModeClosure {
+            return try await closure(mode)
+        } else {
+            return getActionDataParamsModeReturnValue
+        }
+    }
+
+    // MARK: - actionDataQuery
+
+    var actionDataQueryModeThrowableError: Error?
+    var actionDataQueryModeCallsCount = 0
+    var actionDataQueryModeCalled: Bool {
+        return actionDataQueryModeCallsCount > 0
+    }
+    var actionDataQueryModeReceivedArguments: (query: Data, mode: ServiceMode)?
+    var actionDataQueryModeReturnValue: ActionDataQueryResponse!
+    var actionDataQueryModeClosure: ((Data, ServiceMode) async throws -> ActionDataQueryResponse)?
+
+    func actionDataQuery(_ query: Data, mode: ServiceMode) async throws -> ActionDataQueryResponse {
+        if let error = actionDataQueryModeThrowableError {
+            throw error
+        }
+        actionDataQueryModeCallsCount += 1
+        actionDataQueryModeReceivedArguments = (query: query, mode: mode)
+        if let closure = actionDataQueryModeClosure {
+            return try await closure(query, mode)
+        } else {
+            return actionDataQueryModeReturnValue
+        }
+    }
+
 }
 class LightWalletdInfoMock: LightWalletdInfo {
 

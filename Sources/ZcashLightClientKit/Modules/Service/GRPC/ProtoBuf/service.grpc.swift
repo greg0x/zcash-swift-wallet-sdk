@@ -142,6 +142,26 @@ public protocol CompactTxStreamerClientProtocol: GRPCClient {
     _ request: GetPirStatusRequest,
     callOptions: CallOptions?
   ) -> UnaryCall<GetPirStatusRequest, PirStatusResponse>
+
+  func getTxidLookupParams(
+    _ request: TxidLookupParamsRequest,
+    callOptions: CallOptions?
+  ) -> UnaryCall<TxidLookupParamsRequest, TxidLookupParamsResponse>
+
+  func txidLookupQuery(
+    _ request: TxidLookupQueryRequest,
+    callOptions: CallOptions?
+  ) -> UnaryCall<TxidLookupQueryRequest, TxidLookupQueryResponse>
+
+  func getActionDataParams(
+    _ request: ActionDataParamsRequest,
+    callOptions: CallOptions?
+  ) -> UnaryCall<ActionDataParamsRequest, ActionDataParamsResponse>
+
+  func actionDataQuery(
+    _ request: ActionDataQueryRequest,
+    callOptions: CallOptions?
+  ) -> UnaryCall<ActionDataQueryRequest, ActionDataQueryResponse>
 }
 
 extension CompactTxStreamerClientProtocol {
@@ -642,6 +662,81 @@ extension CompactTxStreamerClientProtocol {
       interceptors: self.interceptors?.makeGetPirStatusInterceptors() ?? []
     )
   }
+
+  /// Get parameters for txid lookup PIR queries.
+  /// Returns Cuckoo and InsPIRe params needed to construct queries.
+  ///
+  /// - Parameters:
+  ///   - request: Request to send to GetTxidLookupParams.
+  ///   - callOptions: Call options.
+  /// - Returns: A `UnaryCall` with futures for the metadata, status and response.
+  public func getTxidLookupParams(
+    _ request: TxidLookupParamsRequest,
+    callOptions: CallOptions? = nil
+  ) -> UnaryCall<TxidLookupParamsRequest, TxidLookupParamsResponse> {
+    return self.makeUnaryCall(
+      path: CompactTxStreamerClientMetadata.Methods.getTxidLookupParams.path,
+      request: request,
+      callOptions: callOptions ?? self.defaultCallOptions,
+      interceptors: self.interceptors?.makeGetTxidLookupParamsInterceptors() ?? []
+    )
+  }
+
+  /// Execute a txid lookup PIR query.
+  /// Given (block_height, tx_index), returns (start_action_index, action_count).
+  ///
+  /// - Parameters:
+  ///   - request: Request to send to TxidLookupQuery.
+  ///   - callOptions: Call options.
+  /// - Returns: A `UnaryCall` with futures for the metadata, status and response.
+  public func txidLookupQuery(
+    _ request: TxidLookupQueryRequest,
+    callOptions: CallOptions? = nil
+  ) -> UnaryCall<TxidLookupQueryRequest, TxidLookupQueryResponse> {
+    return self.makeUnaryCall(
+      path: CompactTxStreamerClientMetadata.Methods.txidLookupQuery.path,
+      request: request,
+      callOptions: callOptions ?? self.defaultCallOptions,
+      interceptors: self.interceptors?.makeTxidLookupQueryInterceptors() ?? []
+    )
+  }
+
+  /// Get parameters for action data PIR queries.
+  ///
+  /// - Parameters:
+  ///   - request: Request to send to GetActionDataParams.
+  ///   - callOptions: Call options.
+  /// - Returns: A `UnaryCall` with futures for the metadata, status and response.
+  public func getActionDataParams(
+    _ request: ActionDataParamsRequest,
+    callOptions: CallOptions? = nil
+  ) -> UnaryCall<ActionDataParamsRequest, ActionDataParamsResponse> {
+    return self.makeUnaryCall(
+      path: CompactTxStreamerClientMetadata.Methods.getActionDataParams.path,
+      request: request,
+      callOptions: callOptions ?? self.defaultCallOptions,
+      interceptors: self.interceptors?.makeGetActionDataParamsInterceptors() ?? []
+    )
+  }
+
+  /// Execute an action data PIR query.
+  /// Returns encrypted action data for trial decryption.
+  ///
+  /// - Parameters:
+  ///   - request: Request to send to ActionDataQuery.
+  ///   - callOptions: Call options.
+  /// - Returns: A `UnaryCall` with futures for the metadata, status and response.
+  public func actionDataQuery(
+    _ request: ActionDataQueryRequest,
+    callOptions: CallOptions? = nil
+  ) -> UnaryCall<ActionDataQueryRequest, ActionDataQueryResponse> {
+    return self.makeUnaryCall(
+      path: CompactTxStreamerClientMetadata.Methods.actionDataQuery.path,
+      request: request,
+      callOptions: callOptions ?? self.defaultCallOptions,
+      interceptors: self.interceptors?.makeActionDataQueryInterceptors() ?? []
+    )
+  }
 }
 
 @available(*, deprecated)
@@ -824,6 +919,26 @@ public protocol CompactTxStreamerAsyncClientProtocol: GRPCClient {
     _ request: GetPirStatusRequest,
     callOptions: CallOptions?
   ) -> GRPCAsyncUnaryCall<GetPirStatusRequest, PirStatusResponse>
+
+  func makeGetTxidLookupParamsCall(
+    _ request: TxidLookupParamsRequest,
+    callOptions: CallOptions?
+  ) -> GRPCAsyncUnaryCall<TxidLookupParamsRequest, TxidLookupParamsResponse>
+
+  func makeTxidLookupQueryCall(
+    _ request: TxidLookupQueryRequest,
+    callOptions: CallOptions?
+  ) -> GRPCAsyncUnaryCall<TxidLookupQueryRequest, TxidLookupQueryResponse>
+
+  func makeGetActionDataParamsCall(
+    _ request: ActionDataParamsRequest,
+    callOptions: CallOptions?
+  ) -> GRPCAsyncUnaryCall<ActionDataParamsRequest, ActionDataParamsResponse>
+
+  func makeActionDataQueryCall(
+    _ request: ActionDataQueryRequest,
+    callOptions: CallOptions?
+  ) -> GRPCAsyncUnaryCall<ActionDataQueryRequest, ActionDataQueryResponse>
 }
 
 @available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *)
@@ -1119,6 +1234,54 @@ extension CompactTxStreamerAsyncClientProtocol {
       request: request,
       callOptions: callOptions ?? self.defaultCallOptions,
       interceptors: self.interceptors?.makeGetPirStatusInterceptors() ?? []
+    )
+  }
+
+  public func makeGetTxidLookupParamsCall(
+    _ request: TxidLookupParamsRequest,
+    callOptions: CallOptions? = nil
+  ) -> GRPCAsyncUnaryCall<TxidLookupParamsRequest, TxidLookupParamsResponse> {
+    return self.makeAsyncUnaryCall(
+      path: CompactTxStreamerClientMetadata.Methods.getTxidLookupParams.path,
+      request: request,
+      callOptions: callOptions ?? self.defaultCallOptions,
+      interceptors: self.interceptors?.makeGetTxidLookupParamsInterceptors() ?? []
+    )
+  }
+
+  public func makeTxidLookupQueryCall(
+    _ request: TxidLookupQueryRequest,
+    callOptions: CallOptions? = nil
+  ) -> GRPCAsyncUnaryCall<TxidLookupQueryRequest, TxidLookupQueryResponse> {
+    return self.makeAsyncUnaryCall(
+      path: CompactTxStreamerClientMetadata.Methods.txidLookupQuery.path,
+      request: request,
+      callOptions: callOptions ?? self.defaultCallOptions,
+      interceptors: self.interceptors?.makeTxidLookupQueryInterceptors() ?? []
+    )
+  }
+
+  public func makeGetActionDataParamsCall(
+    _ request: ActionDataParamsRequest,
+    callOptions: CallOptions? = nil
+  ) -> GRPCAsyncUnaryCall<ActionDataParamsRequest, ActionDataParamsResponse> {
+    return self.makeAsyncUnaryCall(
+      path: CompactTxStreamerClientMetadata.Methods.getActionDataParams.path,
+      request: request,
+      callOptions: callOptions ?? self.defaultCallOptions,
+      interceptors: self.interceptors?.makeGetActionDataParamsInterceptors() ?? []
+    )
+  }
+
+  public func makeActionDataQueryCall(
+    _ request: ActionDataQueryRequest,
+    callOptions: CallOptions? = nil
+  ) -> GRPCAsyncUnaryCall<ActionDataQueryRequest, ActionDataQueryResponse> {
+    return self.makeAsyncUnaryCall(
+      path: CompactTxStreamerClientMetadata.Methods.actionDataQuery.path,
+      request: request,
+      callOptions: callOptions ?? self.defaultCallOptions,
+      interceptors: self.interceptors?.makeActionDataQueryInterceptors() ?? []
     )
   }
 }
@@ -1424,6 +1587,54 @@ extension CompactTxStreamerAsyncClientProtocol {
       interceptors: self.interceptors?.makeGetPirStatusInterceptors() ?? []
     )
   }
+
+  public func getTxidLookupParams(
+    _ request: TxidLookupParamsRequest,
+    callOptions: CallOptions? = nil
+  ) async throws -> TxidLookupParamsResponse {
+    return try await self.performAsyncUnaryCall(
+      path: CompactTxStreamerClientMetadata.Methods.getTxidLookupParams.path,
+      request: request,
+      callOptions: callOptions ?? self.defaultCallOptions,
+      interceptors: self.interceptors?.makeGetTxidLookupParamsInterceptors() ?? []
+    )
+  }
+
+  public func txidLookupQuery(
+    _ request: TxidLookupQueryRequest,
+    callOptions: CallOptions? = nil
+  ) async throws -> TxidLookupQueryResponse {
+    return try await self.performAsyncUnaryCall(
+      path: CompactTxStreamerClientMetadata.Methods.txidLookupQuery.path,
+      request: request,
+      callOptions: callOptions ?? self.defaultCallOptions,
+      interceptors: self.interceptors?.makeTxidLookupQueryInterceptors() ?? []
+    )
+  }
+
+  public func getActionDataParams(
+    _ request: ActionDataParamsRequest,
+    callOptions: CallOptions? = nil
+  ) async throws -> ActionDataParamsResponse {
+    return try await self.performAsyncUnaryCall(
+      path: CompactTxStreamerClientMetadata.Methods.getActionDataParams.path,
+      request: request,
+      callOptions: callOptions ?? self.defaultCallOptions,
+      interceptors: self.interceptors?.makeGetActionDataParamsInterceptors() ?? []
+    )
+  }
+
+  public func actionDataQuery(
+    _ request: ActionDataQueryRequest,
+    callOptions: CallOptions? = nil
+  ) async throws -> ActionDataQueryResponse {
+    return try await self.performAsyncUnaryCall(
+      path: CompactTxStreamerClientMetadata.Methods.actionDataQuery.path,
+      request: request,
+      callOptions: callOptions ?? self.defaultCallOptions,
+      interceptors: self.interceptors?.makeActionDataQueryInterceptors() ?? []
+    )
+  }
 }
 
 @available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *)
@@ -1516,6 +1727,18 @@ public protocol CompactTxStreamerClientInterceptorFactoryProtocol: Sendable {
 
   /// - Returns: Interceptors to use when invoking 'getPirStatus'.
   func makeGetPirStatusInterceptors() -> [ClientInterceptor<GetPirStatusRequest, PirStatusResponse>]
+
+  /// - Returns: Interceptors to use when invoking 'getTxidLookupParams'.
+  func makeGetTxidLookupParamsInterceptors() -> [ClientInterceptor<TxidLookupParamsRequest, TxidLookupParamsResponse>]
+
+  /// - Returns: Interceptors to use when invoking 'txidLookupQuery'.
+  func makeTxidLookupQueryInterceptors() -> [ClientInterceptor<TxidLookupQueryRequest, TxidLookupQueryResponse>]
+
+  /// - Returns: Interceptors to use when invoking 'getActionDataParams'.
+  func makeGetActionDataParamsInterceptors() -> [ClientInterceptor<ActionDataParamsRequest, ActionDataParamsResponse>]
+
+  /// - Returns: Interceptors to use when invoking 'actionDataQuery'.
+  func makeActionDataQueryInterceptors() -> [ClientInterceptor<ActionDataQueryRequest, ActionDataQueryResponse>]
 }
 
 public enum CompactTxStreamerClientMetadata {
@@ -1547,6 +1770,10 @@ public enum CompactTxStreamerClientMetadata {
       CompactTxStreamerClientMetadata.Methods.ypirQuery,
       CompactTxStreamerClientMetadata.Methods.inspireQuery,
       CompactTxStreamerClientMetadata.Methods.getPirStatus,
+      CompactTxStreamerClientMetadata.Methods.getTxidLookupParams,
+      CompactTxStreamerClientMetadata.Methods.txidLookupQuery,
+      CompactTxStreamerClientMetadata.Methods.getActionDataParams,
+      CompactTxStreamerClientMetadata.Methods.actionDataQuery,
     ]
   )
 
@@ -1694,6 +1921,30 @@ public enum CompactTxStreamerClientMetadata {
       path: "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetPirStatus",
       type: GRPCCallType.unary
     )
+
+    public static let getTxidLookupParams = GRPCMethodDescriptor(
+      name: "GetTxidLookupParams",
+      path: "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetTxidLookupParams",
+      type: GRPCCallType.unary
+    )
+
+    public static let txidLookupQuery = GRPCMethodDescriptor(
+      name: "TxidLookupQuery",
+      path: "/cash.z.wallet.sdk.rpc.CompactTxStreamer/TxidLookupQuery",
+      type: GRPCCallType.unary
+    )
+
+    public static let getActionDataParams = GRPCMethodDescriptor(
+      name: "GetActionDataParams",
+      path: "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetActionDataParams",
+      type: GRPCCallType.unary
+    )
+
+    public static let actionDataQuery = GRPCMethodDescriptor(
+      name: "ActionDataQuery",
+      path: "/cash.z.wallet.sdk.rpc.CompactTxStreamer/ActionDataQuery",
+      type: GRPCCallType.unary
+    )
   }
 }
 
@@ -1805,6 +2056,21 @@ public protocol CompactTxStreamerProvider: CallHandlerProvider {
   /// Get the current status of the PIR service.
   /// Useful for monitoring and debugging.
   func getPirStatus(request: GetPirStatusRequest, context: StatusOnlyCallContext) -> EventLoopFuture<PirStatusResponse>
+
+  /// Get parameters for txid lookup PIR queries.
+  /// Returns Cuckoo and InsPIRe params needed to construct queries.
+  func getTxidLookupParams(request: TxidLookupParamsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<TxidLookupParamsResponse>
+
+  /// Execute a txid lookup PIR query.
+  /// Given (block_height, tx_index), returns (start_action_index, action_count).
+  func txidLookupQuery(request: TxidLookupQueryRequest, context: StatusOnlyCallContext) -> EventLoopFuture<TxidLookupQueryResponse>
+
+  /// Get parameters for action data PIR queries.
+  func getActionDataParams(request: ActionDataParamsRequest, context: StatusOnlyCallContext) -> EventLoopFuture<ActionDataParamsResponse>
+
+  /// Execute an action data PIR query.
+  /// Returns encrypted action data for trial decryption.
+  func actionDataQuery(request: ActionDataQueryRequest, context: StatusOnlyCallContext) -> EventLoopFuture<ActionDataQueryResponse>
 }
 
 extension CompactTxStreamerProvider {
@@ -2035,6 +2301,42 @@ extension CompactTxStreamerProvider {
         userFunction: self.getPirStatus(request:context:)
       )
 
+    case "GetTxidLookupParams":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<TxidLookupParamsRequest>(),
+        responseSerializer: ProtobufSerializer<TxidLookupParamsResponse>(),
+        interceptors: self.interceptors?.makeGetTxidLookupParamsInterceptors() ?? [],
+        userFunction: self.getTxidLookupParams(request:context:)
+      )
+
+    case "TxidLookupQuery":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<TxidLookupQueryRequest>(),
+        responseSerializer: ProtobufSerializer<TxidLookupQueryResponse>(),
+        interceptors: self.interceptors?.makeTxidLookupQueryInterceptors() ?? [],
+        userFunction: self.txidLookupQuery(request:context:)
+      )
+
+    case "GetActionDataParams":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<ActionDataParamsRequest>(),
+        responseSerializer: ProtobufSerializer<ActionDataParamsResponse>(),
+        interceptors: self.interceptors?.makeGetActionDataParamsInterceptors() ?? [],
+        userFunction: self.getActionDataParams(request:context:)
+      )
+
+    case "ActionDataQuery":
+      return UnaryServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<ActionDataQueryRequest>(),
+        responseSerializer: ProtobufSerializer<ActionDataQueryResponse>(),
+        interceptors: self.interceptors?.makeActionDataQueryInterceptors() ?? [],
+        userFunction: self.actionDataQuery(request:context:)
+      )
+
     default:
       return nil
     }
@@ -2231,6 +2533,33 @@ public protocol CompactTxStreamerAsyncProvider: CallHandlerProvider, Sendable {
     request: GetPirStatusRequest,
     context: GRPCAsyncServerCallContext
   ) async throws -> PirStatusResponse
+
+  /// Get parameters for txid lookup PIR queries.
+  /// Returns Cuckoo and InsPIRe params needed to construct queries.
+  func getTxidLookupParams(
+    request: TxidLookupParamsRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> TxidLookupParamsResponse
+
+  /// Execute a txid lookup PIR query.
+  /// Given (block_height, tx_index), returns (start_action_index, action_count).
+  func txidLookupQuery(
+    request: TxidLookupQueryRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> TxidLookupQueryResponse
+
+  /// Get parameters for action data PIR queries.
+  func getActionDataParams(
+    request: ActionDataParamsRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> ActionDataParamsResponse
+
+  /// Execute an action data PIR query.
+  /// Returns encrypted action data for trial decryption.
+  func actionDataQuery(
+    request: ActionDataQueryRequest,
+    context: GRPCAsyncServerCallContext
+  ) async throws -> ActionDataQueryResponse
 }
 
 @available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *)
@@ -2468,6 +2797,42 @@ extension CompactTxStreamerAsyncProvider {
         wrapping: { try await self.getPirStatus(request: $0, context: $1) }
       )
 
+    case "GetTxidLookupParams":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<TxidLookupParamsRequest>(),
+        responseSerializer: ProtobufSerializer<TxidLookupParamsResponse>(),
+        interceptors: self.interceptors?.makeGetTxidLookupParamsInterceptors() ?? [],
+        wrapping: { try await self.getTxidLookupParams(request: $0, context: $1) }
+      )
+
+    case "TxidLookupQuery":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<TxidLookupQueryRequest>(),
+        responseSerializer: ProtobufSerializer<TxidLookupQueryResponse>(),
+        interceptors: self.interceptors?.makeTxidLookupQueryInterceptors() ?? [],
+        wrapping: { try await self.txidLookupQuery(request: $0, context: $1) }
+      )
+
+    case "GetActionDataParams":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<ActionDataParamsRequest>(),
+        responseSerializer: ProtobufSerializer<ActionDataParamsResponse>(),
+        interceptors: self.interceptors?.makeGetActionDataParamsInterceptors() ?? [],
+        wrapping: { try await self.getActionDataParams(request: $0, context: $1) }
+      )
+
+    case "ActionDataQuery":
+      return GRPCAsyncServerHandler(
+        context: context,
+        requestDeserializer: ProtobufDeserializer<ActionDataQueryRequest>(),
+        responseSerializer: ProtobufSerializer<ActionDataQueryResponse>(),
+        interceptors: self.interceptors?.makeActionDataQueryInterceptors() ?? [],
+        wrapping: { try await self.actionDataQuery(request: $0, context: $1) }
+      )
+
     default:
       return nil
     }
@@ -2571,6 +2936,22 @@ public protocol CompactTxStreamerServerInterceptorFactoryProtocol: Sendable {
   /// - Returns: Interceptors to use when handling 'getPirStatus'.
   ///   Defaults to calling `self.makeInterceptors()`.
   func makeGetPirStatusInterceptors() -> [ServerInterceptor<GetPirStatusRequest, PirStatusResponse>]
+
+  /// - Returns: Interceptors to use when handling 'getTxidLookupParams'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeGetTxidLookupParamsInterceptors() -> [ServerInterceptor<TxidLookupParamsRequest, TxidLookupParamsResponse>]
+
+  /// - Returns: Interceptors to use when handling 'txidLookupQuery'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeTxidLookupQueryInterceptors() -> [ServerInterceptor<TxidLookupQueryRequest, TxidLookupQueryResponse>]
+
+  /// - Returns: Interceptors to use when handling 'getActionDataParams'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeGetActionDataParamsInterceptors() -> [ServerInterceptor<ActionDataParamsRequest, ActionDataParamsResponse>]
+
+  /// - Returns: Interceptors to use when handling 'actionDataQuery'.
+  ///   Defaults to calling `self.makeInterceptors()`.
+  func makeActionDataQueryInterceptors() -> [ServerInterceptor<ActionDataQueryRequest, ActionDataQueryResponse>]
 }
 
 public enum CompactTxStreamerServerMetadata {
@@ -2602,6 +2983,10 @@ public enum CompactTxStreamerServerMetadata {
       CompactTxStreamerServerMetadata.Methods.ypirQuery,
       CompactTxStreamerServerMetadata.Methods.inspireQuery,
       CompactTxStreamerServerMetadata.Methods.getPirStatus,
+      CompactTxStreamerServerMetadata.Methods.getTxidLookupParams,
+      CompactTxStreamerServerMetadata.Methods.txidLookupQuery,
+      CompactTxStreamerServerMetadata.Methods.getActionDataParams,
+      CompactTxStreamerServerMetadata.Methods.actionDataQuery,
     ]
   )
 
@@ -2747,6 +3132,30 @@ public enum CompactTxStreamerServerMetadata {
     public static let getPirStatus = GRPCMethodDescriptor(
       name: "GetPirStatus",
       path: "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetPirStatus",
+      type: GRPCCallType.unary
+    )
+
+    public static let getTxidLookupParams = GRPCMethodDescriptor(
+      name: "GetTxidLookupParams",
+      path: "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetTxidLookupParams",
+      type: GRPCCallType.unary
+    )
+
+    public static let txidLookupQuery = GRPCMethodDescriptor(
+      name: "TxidLookupQuery",
+      path: "/cash.z.wallet.sdk.rpc.CompactTxStreamer/TxidLookupQuery",
+      type: GRPCCallType.unary
+    )
+
+    public static let getActionDataParams = GRPCMethodDescriptor(
+      name: "GetActionDataParams",
+      path: "/cash.z.wallet.sdk.rpc.CompactTxStreamer/GetActionDataParams",
+      type: GRPCCallType.unary
+    )
+
+    public static let actionDataQuery = GRPCMethodDescriptor(
+      name: "ActionDataQuery",
+      path: "/cash.z.wallet.sdk.rpc.CompactTxStreamer/ActionDataQuery",
       type: GRPCCallType.unary
     )
   }

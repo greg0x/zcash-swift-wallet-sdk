@@ -484,7 +484,7 @@ class LightWalletGRPCService: LightWalletService {
         guard mode == .direct else {
             throw ZcashError.grpcServiceCalledWithTorMode
         }
-        
+
         do {
             let request = GetPirStatusRequest()
             return try await compactTxStreamer.getPirStatus(request)
@@ -493,7 +493,67 @@ class LightWalletGRPCService: LightWalletService {
             throw ZcashError.serviceGetPirStatusFailed(serviceError)
         }
     }
-    
+
+    // MARK: - Txid PIR
+
+    func getTxidLookupParams(mode: ServiceMode) async throws -> TxidLookupParamsResponse {
+        guard mode == .direct else {
+            throw ZcashError.grpcServiceCalledWithTorMode
+        }
+
+        do {
+            let request = TxidLookupParamsRequest()
+            return try await compactTxStreamer.getTxidLookupParams(request)
+        } catch {
+            let serviceError = error.mapToServiceError()
+            throw ZcashError.serviceGetTxidLookupParamsFailed(serviceError)
+        }
+    }
+
+    func txidLookupQuery(_ query: Data, mode: ServiceMode) async throws -> TxidLookupQueryResponse {
+        guard mode == .direct else {
+            throw ZcashError.grpcServiceCalledWithTorMode
+        }
+
+        do {
+            var request = TxidLookupQueryRequest()
+            request.queryData = query
+            return try await compactTxStreamer.txidLookupQuery(request)
+        } catch {
+            let serviceError = error.mapToServiceError()
+            throw ZcashError.serviceTxidLookupQueryFailed(serviceError)
+        }
+    }
+
+    func getActionDataParams(mode: ServiceMode) async throws -> ActionDataParamsResponse {
+        guard mode == .direct else {
+            throw ZcashError.grpcServiceCalledWithTorMode
+        }
+
+        do {
+            let request = ActionDataParamsRequest()
+            return try await compactTxStreamer.getActionDataParams(request)
+        } catch {
+            let serviceError = error.mapToServiceError()
+            throw ZcashError.serviceGetActionDataParamsFailed(serviceError)
+        }
+    }
+
+    func actionDataQuery(_ query: Data, mode: ServiceMode) async throws -> ActionDataQueryResponse {
+        guard mode == .direct else {
+            throw ZcashError.grpcServiceCalledWithTorMode
+        }
+
+        do {
+            var request = ActionDataQueryRequest()
+            request.queryData = query
+            return try await compactTxStreamer.actionDataQuery(request)
+        } catch {
+            let serviceError = error.mapToServiceError()
+            throw ZcashError.serviceActionDataQueryFailed(serviceError)
+        }
+    }
+
     func closeConnections() async {
         _ = channel?.close()
     }

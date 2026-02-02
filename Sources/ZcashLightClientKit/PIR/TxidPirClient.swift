@@ -118,10 +118,11 @@ public struct TxidActionDataFullResult: Sendable {
 /// ## Usage
 ///
 /// ```swift
-/// let client = TxidPirClient()
+/// let networkService = TxidNetworkService(service: lightWalletService)
+/// let client = TxidPirClient(networkService: networkService)
 ///
-/// // Connect and precompute keys (expensive, ~3-10s)
-/// try await client.connect(serverURL: URL(string: "https://pir.example.com")!)
+/// // Connect via gRPC (through lightwalletd) and precompute keys (expensive, ~3-10s)
+/// try await client.connect()
 /// try await client.precomputeKeys()
 ///
 /// // Query for a transaction
@@ -138,31 +139,25 @@ public actor TxidPirClient {
     public private(set) var txLookupParams: TxidLookupParamsInfo?
     public private(set) var actionDataParams: TxidActionDataParamsInfo?
 
-    private var serverURL: URL?
     private var rustClient: TxidPirClientState?  // FFI class from PIRClientFFI
     private let networkService: TxidNetworkService
 
-    public init(networkService: TxidNetworkService = TxidNetworkService()) {
+    public init(networkService: TxidNetworkService) {
         self.networkService = networkService
     }
 
     // MARK: - Connection
 
-    /// Connect to a PIR server and fetch parameters.
+    /// Connect to the PIR server (via lightwalletd) and fetch parameters.
     ///
     /// This fetches the PIR parameters from the server and initializes
     /// the cryptographic state. Call `precomputeKeys()` after this.
-    ///
-    /// - Parameter serverURL: The base URL of the PIR server.
-    public func connect(serverURL: URL) async throws {
-        self.serverURL = serverURL
+    public func connect() async throws {
         self.state = TxidPirConnectionState.connecting
 
         do {
-            let serverURLString = serverURL.absoluteString
-
-            // Fetch TX Lookup params
-            let txParams = try await networkService.fetchTxLookupParams(serverURL: serverURLString)
+            // Fetch TX Lookup params via gRPC
+            let txParams = try await networkService.fetchTxLookupParams()
             self.txLookupParams = TxidLookupParamsInfo(
                 dbVersion: txParams.dbVersionValue,
                 startHeight: txParams.dbVersion.startHeight,
@@ -179,8 +174,8 @@ public actor TxidPirClient {
                 )
             )
 
-            // Fetch Action Data params
-            let actionParams = try await networkService.fetchActionDataParams(serverURL: serverURLString)
+            // Fetch Action Data params via gRPC
+            let actionParams = try await networkService.fetchActionDataParams()
             self.actionDataParams = TxidActionDataParamsInfo(
                 dbVersion: actionParams.dbVersionValue,
                 startHeight: actionParams.dbVersion.startHeight,
@@ -265,7 +260,7 @@ public actor TxidPirClient {
     ///   - txIndex: The index of the transaction within the block.
     /// - Returns: The result including action data indices, timing, and bandwidth stats.
     public func queryTxLookup(blockHeight: UInt32, txIndex: UInt16) async throws -> TxidLookupFullResult {
-        guard case TxidPirConnectionState.ready = state, let rustClient = rustClient, let serverURL = serverURL else {
+        guard case TxidPirConnectionState.ready = state, let rustClient = rustClient else {
             throw TxidPirError.notReady
         }
 
@@ -277,16 +272,13 @@ public actor TxidPirClient {
         let queryBundle = try rustClient.prepareTxLookupQuery(blockHeight: blockHeight, txIndex: txIndex)
         timing.queryGenMs = (CFAbsoluteTimeGetCurrent() - queryGenStart) * 1000
 
-        // Send queries via HTTP
+        // Send queries via gRPC (through lightwalletd)
         var responses: [Data] = []
         for query in queryBundle.queries {
             bandwidth.uploadBytes += query.queryBytes.count
 
             let networkStart = CFAbsoluteTimeGetCurrent()
-            let response = try await networkService.sendQuery(
-                queryData: query.queryBytes,
-                endpoint: "\(serverURL.absoluteString)/pir/tx-lookup/query"
-            )
+            let response = try await networkService.sendTxLookupQuery(queryData: query.queryBytes)
             timing.networkMs += (CFAbsoluteTimeGetCurrent() - networkStart) * 1000
 
             bandwidth.downloadBytes += response.data.count
@@ -320,7 +312,7 @@ public actor TxidPirClient {
     ///   - actionCount: Number of actions to retrieve.
     /// - Returns: The action data along with timing and bandwidth stats.
     public func queryActionData(startIndex: UInt64, actionCount: UInt16) async throws -> TxidActionDataFullResult {
-        guard case TxidPirConnectionState.ready = state, let rustClient = rustClient, let serverURL = serverURL else {
+        guard case TxidPirConnectionState.ready = state, let rustClient = rustClient else {
             throw TxidPirError.notReady
         }
 
@@ -332,16 +324,13 @@ public actor TxidPirClient {
         let queryBundle = try rustClient.prepareActionDataQuery(startIndex: startIndex, actionCount: actionCount)
         timing.queryGenMs = (CFAbsoluteTimeGetCurrent() - queryGenStart) * 1000
 
-        // Send queries via HTTP
+        // Send queries via gRPC (through lightwalletd)
         var responses: [Data] = []
         for query in queryBundle.queries {
             bandwidth.uploadBytes += query.queryBytes.count
 
             let networkStart = CFAbsoluteTimeGetCurrent()
-            let response = try await networkService.sendQuery(
-                queryData: query.queryBytes,
-                endpoint: "\(serverURL.absoluteString)/pir/action-data/query"
-            )
+            let response = try await networkService.sendActionDataQuery(queryData: query.queryBytes)
             timing.networkMs += (CFAbsoluteTimeGetCurrent() - networkStart) * 1000
 
             bandwidth.downloadBytes += response.data.count
@@ -373,7 +362,6 @@ public actor TxidPirClient {
     /// Disconnect and reset state.
     public func disconnect() {
         rustClient = nil
-        serverURL = nil
         txLookupParams = nil
         actionDataParams = nil
         state = TxidPirConnectionState.disconnected

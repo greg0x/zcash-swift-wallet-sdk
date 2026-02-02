@@ -282,4 +282,44 @@ protocol LightWalletService: AnyObject {
     /// - Returns: PIR service status response.
     /// - Throws: `serviceGetPirStatusFailed` when GRPC call fails.
     func getPirStatus(mode: ServiceMode) async throws -> PirStatusResponse
+
+    // MARK: - Txid PIR (Privacy-preserving transaction lookup)
+
+    /// Get parameters for txid lookup PIR queries.
+    ///
+    /// Returns Cuckoo and InsPIRe params needed to construct queries.
+    ///
+    /// - Parameter mode: The service mode to use for the request.
+    /// - Returns: Txid lookup parameters response.
+    /// - Throws: `serviceGetTxidLookupParamsFailed` when GRPC call fails.
+    func getTxidLookupParams(mode: ServiceMode) async throws -> TxidLookupParamsResponse
+
+    /// Execute a txid lookup PIR query.
+    ///
+    /// Given (block_height, tx_index), returns (start_action_index, action_count).
+    ///
+    /// - Parameters:
+    ///   - query: Encrypted PIR query bytes.
+    ///   - mode: The service mode to use for the request.
+    /// - Returns: Encrypted PIR response.
+    /// - Throws: `serviceTxidLookupQueryFailed` when GRPC call fails.
+    func txidLookupQuery(_ query: Data, mode: ServiceMode) async throws -> TxidLookupQueryResponse
+
+    /// Get parameters for action data PIR queries.
+    ///
+    /// - Parameter mode: The service mode to use for the request.
+    /// - Returns: Action data parameters response.
+    /// - Throws: `serviceGetActionDataParamsFailed` when GRPC call fails.
+    func getActionDataParams(mode: ServiceMode) async throws -> ActionDataParamsResponse
+
+    /// Execute an action data PIR query.
+    ///
+    /// Returns encrypted action data for trial decryption.
+    ///
+    /// - Parameters:
+    ///   - query: Encrypted PIR query bytes.
+    ///   - mode: The service mode to use for the request.
+    /// - Returns: Encrypted PIR response.
+    /// - Throws: `serviceActionDataQueryFailed` when GRPC call fails.
+    func actionDataQuery(_ query: Data, mode: ServiceMode) async throws -> ActionDataQueryResponse
 }
