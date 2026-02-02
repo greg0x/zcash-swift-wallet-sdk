@@ -546,6 +546,14 @@ public protocol Synchronizer: AnyObject {
     /// - Returns: PIR parameters from the server.
     /// - Throws: If the gRPC call fails.
     func getPirParams() async throws -> PirParamsResponse
+
+    /// Create a new Txid PIR client using this synchronizer's lightwalletd connection.
+    ///
+    /// The Txid PIR client enables privacy-preserving transaction lookups by block height
+    /// and tx index, as well as action data retrieval.
+    ///
+    /// - Returns: A new `TxidPirClient` configured to use this synchronizer's connection.
+    func createTxidPirClient() -> TxidPirClient
 }
 
 public enum SyncStatus: Equatable {
