@@ -273,6 +273,8 @@ public enum ZcashErrorCode: String {
     case rustDeleteAccount = "ZRUST0090"
     /// Error from rust layer when calling ZcashRustBackend.getOrchardWitnessAtHeight
     case rustGetOrchardWitnessAtHeight = "ZRUST0092"
+    /// Error from rust layer when calling ZcashRustBackend.getOrchardWitnessWithFrontier
+    case rustGetOrchardWitnessWithFrontier = "ZRUST0094"
     /// Error from rust layer when calling ZcashRustBackend.listOrchardNotes
     case rustListOrchardNotes = "ZRUST0093"
     /// SQLite query failed when fetching all accounts from the database.

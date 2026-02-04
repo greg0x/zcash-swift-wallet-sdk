@@ -1299,10 +1299,36 @@ extension SDKSynchronizer {
     }
 
     public func getOrchardWitnessAtHeight(notePosition: UInt64, checkpointHeight: BlockHeight) async throws -> Data {
-        try await initializer.rustBackend.getOrchardWitnessAtHeight(
-            notePosition: notePosition,
-            checkpointHeight: checkpointHeight
-        )
+        do {
+            // Try local witness generation first
+            return try await initializer.rustBackend.getOrchardWitnessAtHeight(
+                notePosition: notePosition,
+                checkpointHeight: checkpointHeight
+            )
+        } catch let error as ZcashError {
+            // Check if error is TreeIncomplete - need to fetch frontier from lightwalletd
+            // Must pattern match to extract the rustError associated value since localizedDescription is generic
+            if case let .rustGetOrchardWitnessAtHeight(rustError) = error,
+               rustError.contains("TreeIncomplete") || rustError.contains("Tree data incomplete") {
+                // Fetch tree state from lightwalletd
+                let blockId = BlockID(height: checkpointHeight)
+                let treeState = try await initializer.lightWalletService.getTreeState(
+                    blockId,
+                    mode: await sdkFlags.ifTor(.uniqueTor)
+                )
+
+                // Serialize the protobuf tree state
+                let treeStateData = try treeState.serializedData()
+
+                // Retry with frontier
+                return try await initializer.rustBackend.getOrchardWitnessWithFrontier(
+                    notePosition: notePosition,
+                    checkpointHeight: checkpointHeight,
+                    treeState: treeStateData
+                )
+            }
+            throw error
+        }
     }
 }
 

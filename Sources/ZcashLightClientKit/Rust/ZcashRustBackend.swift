@@ -1359,6 +1359,49 @@ struct ZcashRustBackend: ZcashRustBackendWelding {
         )
     }
 
+    /// Generates an Orchard witness using a frontier from GetTreeState.
+    ///
+    /// Use this when `getOrchardWitnessAtHeight` fails with TreeIncomplete error.
+    /// The frontier from GetTreeState contains all the sibling hashes needed to compute
+    /// witnesses for any note that existed at that height.
+    ///
+    /// - Parameters:
+    ///   - notePosition: The commitment tree position of the note
+    ///   - checkpointHeight: The block height for the witness (snapshot height)
+    ///   - treeState: Protobuf-encoded TreeState from lightwalletd's GetTreeState RPC
+    /// - Returns: Serialized witness data
+    @DBActor
+    func getOrchardWitnessWithFrontier(
+        notePosition: UInt64,
+        checkpointHeight: BlockHeight,
+        treeState: Data
+    ) async throws -> Data {
+        let witnessPtr = treeState.withUnsafeBytes { treeStatePtr in
+            zcashlc_get_orchard_witness_with_frontier(
+                dbData.0,
+                dbData.1,
+                networkType.networkId,
+                notePosition,
+                UInt32(checkpointHeight),
+                treeStatePtr.baseAddress?.assumingMemoryBound(to: UInt8.self),
+                UInt(treeState.count)
+            )
+        }
+
+        guard let witnessPtr else {
+            throw ZcashError.rustGetOrchardWitnessWithFrontier(
+                lastErrorMessage(fallback: "`getOrchardWitnessWithFrontier` failed with unknown error")
+            )
+        }
+
+        defer { zcashlc_free_boxed_slice(witnessPtr) }
+
+        return Data(
+            bytes: witnessPtr.pointee.ptr,
+            count: Int(witnessPtr.pointee.len)
+        )
+    }
+
     /// Lists all received Orchard notes with their commitment tree positions.
     ///
     /// This is a helper function for the voting demo that returns all Orchard notes

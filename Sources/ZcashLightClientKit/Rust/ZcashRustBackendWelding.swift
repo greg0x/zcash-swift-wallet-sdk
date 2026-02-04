@@ -426,6 +426,23 @@ protocol ZcashRustBackendWelding {
         checkpointHeight: BlockHeight
     ) async throws -> Data
 
+    /// Generates an Orchard witness using a frontier from GetTreeState.
+    ///
+    /// Use this when `getOrchardWitnessAtHeight` fails with TreeIncomplete error.
+    /// The frontier from GetTreeState contains all the sibling hashes needed to compute
+    /// witnesses for any note that existed at that height.
+    ///
+    /// - Parameters:
+    ///   - notePosition: The commitment tree position of the note
+    ///   - checkpointHeight: The block height for the witness (snapshot height)
+    ///   - treeState: Protobuf-encoded TreeState from lightwalletd's GetTreeState RPC
+    /// - Returns: Serialized witness data
+    func getOrchardWitnessWithFrontier(
+        notePosition: UInt64,
+        checkpointHeight: BlockHeight,
+        treeState: Data
+    ) async throws -> Data
+
     /// Lists all received Orchard notes with their commitment tree positions.
     ///
     /// This is a helper function for the voting demo that returns all Orchard notes

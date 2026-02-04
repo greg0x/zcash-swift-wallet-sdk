@@ -2734,6 +2734,52 @@ class SynchronizerMock: Synchronizer {
         }
     }
 
+    // MARK: - listOrchardNotes
+
+    var listOrchardNotesThrowableError: Error?
+    var listOrchardNotesCallsCount = 0
+    var listOrchardNotesCalled: Bool {
+        return listOrchardNotesCallsCount > 0
+    }
+    var listOrchardNotesReturnValue: Data!
+    var listOrchardNotesClosure: (() async throws -> Data)?
+
+    func listOrchardNotes() async throws -> Data {
+        if let error = listOrchardNotesThrowableError {
+            throw error
+        }
+        listOrchardNotesCallsCount += 1
+        if let closure = listOrchardNotesClosure {
+            return try await closure()
+        } else {
+            return listOrchardNotesReturnValue
+        }
+    }
+
+    // MARK: - getOrchardWitnessAtHeight
+
+    var getOrchardWitnessAtHeightNotePositionCheckpointHeightThrowableError: Error?
+    var getOrchardWitnessAtHeightNotePositionCheckpointHeightCallsCount = 0
+    var getOrchardWitnessAtHeightNotePositionCheckpointHeightCalled: Bool {
+        return getOrchardWitnessAtHeightNotePositionCheckpointHeightCallsCount > 0
+    }
+    var getOrchardWitnessAtHeightNotePositionCheckpointHeightReceivedArguments: (notePosition: UInt64, checkpointHeight: BlockHeight)?
+    var getOrchardWitnessAtHeightNotePositionCheckpointHeightReturnValue: Data!
+    var getOrchardWitnessAtHeightNotePositionCheckpointHeightClosure: ((UInt64, BlockHeight) async throws -> Data)?
+
+    func getOrchardWitnessAtHeight(notePosition: UInt64, checkpointHeight: BlockHeight) async throws -> Data {
+        if let error = getOrchardWitnessAtHeightNotePositionCheckpointHeightThrowableError {
+            throw error
+        }
+        getOrchardWitnessAtHeightNotePositionCheckpointHeightCallsCount += 1
+        getOrchardWitnessAtHeightNotePositionCheckpointHeightReceivedArguments = (notePosition: notePosition, checkpointHeight: checkpointHeight)
+        if let closure = getOrchardWitnessAtHeightNotePositionCheckpointHeightClosure {
+            return try await closure(notePosition, checkpointHeight)
+        } else {
+            return getOrchardWitnessAtHeightNotePositionCheckpointHeightReturnValue
+        }
+    }
+
 }
 class TransactionRepositoryMock: TransactionRepository {
 
@@ -4190,6 +4236,76 @@ class ZcashRustBackendWeldingMock: ZcashRustBackendWelding {
         deleteAccountCallsCount += 1
         deleteAccountReceivedAccountUUID = accountUUID
         try await deleteAccountClosure!(accountUUID)
+    }
+
+    // MARK: - getOrchardWitnessAtHeight
+
+    var getOrchardWitnessAtHeightNotePositionCheckpointHeightThrowableError: Error?
+    var getOrchardWitnessAtHeightNotePositionCheckpointHeightCallsCount = 0
+    var getOrchardWitnessAtHeightNotePositionCheckpointHeightCalled: Bool {
+        return getOrchardWitnessAtHeightNotePositionCheckpointHeightCallsCount > 0
+    }
+    var getOrchardWitnessAtHeightNotePositionCheckpointHeightReceivedArguments: (notePosition: UInt64, checkpointHeight: BlockHeight)?
+    var getOrchardWitnessAtHeightNotePositionCheckpointHeightReturnValue: Data!
+    var getOrchardWitnessAtHeightNotePositionCheckpointHeightClosure: ((UInt64, BlockHeight) async throws -> Data)?
+
+    func getOrchardWitnessAtHeight(notePosition: UInt64, checkpointHeight: BlockHeight) async throws -> Data {
+        if let error = getOrchardWitnessAtHeightNotePositionCheckpointHeightThrowableError {
+            throw error
+        }
+        getOrchardWitnessAtHeightNotePositionCheckpointHeightCallsCount += 1
+        getOrchardWitnessAtHeightNotePositionCheckpointHeightReceivedArguments = (notePosition: notePosition, checkpointHeight: checkpointHeight)
+        if let closure = getOrchardWitnessAtHeightNotePositionCheckpointHeightClosure {
+            return try await closure(notePosition, checkpointHeight)
+        } else {
+            return getOrchardWitnessAtHeightNotePositionCheckpointHeightReturnValue
+        }
+    }
+
+    // MARK: - getOrchardWitnessWithFrontier
+
+    var getOrchardWitnessWithFrontierNotePositionCheckpointHeightTreeStateThrowableError: Error?
+    var getOrchardWitnessWithFrontierNotePositionCheckpointHeightTreeStateCallsCount = 0
+    var getOrchardWitnessWithFrontierNotePositionCheckpointHeightTreeStateCalled: Bool {
+        return getOrchardWitnessWithFrontierNotePositionCheckpointHeightTreeStateCallsCount > 0
+    }
+    var getOrchardWitnessWithFrontierNotePositionCheckpointHeightTreeStateReceivedArguments: (notePosition: UInt64, checkpointHeight: BlockHeight, treeState: Data)?
+    var getOrchardWitnessWithFrontierNotePositionCheckpointHeightTreeStateReturnValue: Data!
+    var getOrchardWitnessWithFrontierNotePositionCheckpointHeightTreeStateClosure: ((UInt64, BlockHeight, Data) async throws -> Data)?
+
+    func getOrchardWitnessWithFrontier(notePosition: UInt64, checkpointHeight: BlockHeight, treeState: Data) async throws -> Data {
+        if let error = getOrchardWitnessWithFrontierNotePositionCheckpointHeightTreeStateThrowableError {
+            throw error
+        }
+        getOrchardWitnessWithFrontierNotePositionCheckpointHeightTreeStateCallsCount += 1
+        getOrchardWitnessWithFrontierNotePositionCheckpointHeightTreeStateReceivedArguments = (notePosition: notePosition, checkpointHeight: checkpointHeight, treeState: treeState)
+        if let closure = getOrchardWitnessWithFrontierNotePositionCheckpointHeightTreeStateClosure {
+            return try await closure(notePosition, checkpointHeight, treeState)
+        } else {
+            return getOrchardWitnessWithFrontierNotePositionCheckpointHeightTreeStateReturnValue
+        }
+    }
+
+    // MARK: - listOrchardNotes
+
+    var listOrchardNotesThrowableError: Error?
+    var listOrchardNotesCallsCount = 0
+    var listOrchardNotesCalled: Bool {
+        return listOrchardNotesCallsCount > 0
+    }
+    var listOrchardNotesReturnValue: Data!
+    var listOrchardNotesClosure: (() async throws -> Data)?
+
+    func listOrchardNotes() async throws -> Data {
+        if let error = listOrchardNotesThrowableError {
+            throw error
+        }
+        listOrchardNotesCallsCount += 1
+        if let closure = listOrchardNotesClosure {
+            return try await closure()
+        } else {
+            return listOrchardNotesReturnValue
+        }
     }
 
 }
