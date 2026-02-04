@@ -1312,12 +1312,79 @@ struct ZcashRustBackend: ZcashRustBackendWelding {
             networkType.networkId,
             accountUUID.id
         )
-        
+
         guard success else {
             throw ZcashError.rustDeleteAccount(
                 lastErrorMessage(fallback: "`deleteAccount` failed with unknown error")
             )
         }
+    }
+
+    // MARK: - Voting Proposal Verification Demo
+
+    /// Gets the Orchard Merkle witness (inclusion proof) for a note at a specific checkpoint height.
+    ///
+    /// This enables verifying that a note existed in the commitment tree at a specific historical
+    /// height, which is useful for voting proposal verification where proofs must be anchored to
+    /// a specific "snapshot" height.
+    ///
+    /// - Parameters:
+    ///   - notePosition: The commitment tree position of the note
+    ///   - checkpointHeight: The block height to get the witness at (must be >= note's mined height)
+    /// - Returns: Serialized witness data (1068 bytes: position + root + path_len + auth_path)
+    @DBActor
+    func getOrchardWitnessAtHeight(
+        notePosition: UInt64,
+        checkpointHeight: BlockHeight
+    ) async throws -> Data {
+        let witnessPtr = zcashlc_get_orchard_witness_at_height(
+            dbData.0,
+            dbData.1,
+            networkType.networkId,
+            notePosition,
+            UInt32(checkpointHeight)
+        )
+
+        guard let witnessPtr else {
+            throw ZcashError.rustGetOrchardWitnessAtHeight(
+                lastErrorMessage(fallback: "`getOrchardWitnessAtHeight` failed with unknown error")
+            )
+        }
+
+        defer { zcashlc_free_boxed_slice(witnessPtr) }
+
+        return Data(
+            bytes: witnessPtr.pointee.ptr,
+            count: Int(witnessPtr.pointee.len)
+        )
+    }
+
+    /// Lists all received Orchard notes with their commitment tree positions.
+    ///
+    /// This is a helper function for the voting demo that returns all Orchard notes
+    /// the wallet has received, along with their positions in the commitment tree.
+    ///
+    /// - Returns: Serialized array of notes (4 bytes count + 28 bytes per note: note_id, position, value, mined_height)
+    @DBActor
+    func listOrchardNotes() async throws -> Data {
+        let notesPtr = zcashlc_list_orchard_notes(
+            dbData.0,
+            dbData.1,
+            networkType.networkId
+        )
+
+        guard let notesPtr else {
+            throw ZcashError.rustListOrchardNotes(
+                lastErrorMessage(fallback: "`listOrchardNotes` failed with unknown error")
+            )
+        }
+
+        defer { zcashlc_free_boxed_slice(notesPtr) }
+
+        return Data(
+            bytes: notesPtr.pointee.ptr,
+            count: Int(notesPtr.pointee.len)
+        )
     }
 }
 

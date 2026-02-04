@@ -408,4 +408,29 @@ protocol ZcashRustBackendWelding {
     
     /// Attempts to delete an account defined by UUID
     func deleteAccount(_ accountUUID: AccountUUID) async throws
+
+    // MARK: - Voting Proposal Verification Demo
+
+    /// Gets the Orchard Merkle witness (inclusion proof) for a note at a specific checkpoint height.
+    ///
+    /// This enables verifying that a note existed in the commitment tree at a specific historical
+    /// height, which is useful for voting proposal verification where proofs must be anchored to
+    /// a specific "snapshot" height.
+    ///
+    /// - Parameters:
+    ///   - notePosition: The commitment tree position of the note
+    ///   - checkpointHeight: The block height to get the witness at (must be >= note's mined height)
+    /// - Returns: Serialized witness data (1068 bytes: position + root + path_len + auth_path)
+    func getOrchardWitnessAtHeight(
+        notePosition: UInt64,
+        checkpointHeight: BlockHeight
+    ) async throws -> Data
+
+    /// Lists all received Orchard notes with their commitment tree positions.
+    ///
+    /// This is a helper function for the voting demo that returns all Orchard notes
+    /// the wallet has received, along with their positions in the commitment tree.
+    ///
+    /// - Returns: Serialized array of notes (4 bytes count + 28 bytes per note: note_id, position, value, mined_height)
+    func listOrchardNotes() async throws -> Data
 }
