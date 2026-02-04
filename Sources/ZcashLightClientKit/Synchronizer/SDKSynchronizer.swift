@@ -1291,6 +1291,19 @@ extension SDKSynchronizer {
     public func getTxidPirClient() -> TxidPirClient? {
         initializer.container.resolve(TxidPirClient?.self)
     }
+
+    // MARK: - Witness Demo (Voting Proposal Verification)
+
+    public func listOrchardNotes() async throws -> Data {
+        try await initializer.rustBackend.listOrchardNotes()
+    }
+
+    public func getOrchardWitnessAtHeight(notePosition: UInt64, checkpointHeight: BlockHeight) async throws -> Data {
+        try await initializer.rustBackend.getOrchardWitnessAtHeight(
+            notePosition: notePosition,
+            checkpointHeight: checkpointHeight
+        )
+    }
 }
 
 extension InternalSyncStatus {

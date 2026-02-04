@@ -600,6 +600,27 @@ public protocol Synchronizer: AnyObject {
     ///
     /// - Returns: The shared `TxidPirClient`, or nil if PIR is disabled.
     func getTxidPirClient() -> TxidPirClient?
+
+    // MARK: - Witness Demo (Voting Proposal Verification)
+
+    /// List all Orchard notes with their commitment tree positions.
+    ///
+    /// Returns serialized array of notes with (note_id, position, value_zats, mined_height).
+    ///
+    /// - Returns: Serialized note data.
+    /// - Throws: If the database query fails.
+    func listOrchardNotes() async throws -> Data
+
+    /// Get a Merkle witness for an Orchard note at a specific checkpoint height.
+    ///
+    /// This is the core primitive for voting proposal verification - it proves that
+    /// a note existed in the commitment tree at a historical snapshot height.
+    ///
+    /// - Parameter notePosition: The commitment tree position of the note.
+    /// - Parameter checkpointHeight: The block height for which to generate the witness.
+    /// - Returns: Serialized witness data (position + root + path_len + auth_path).
+    /// - Throws: If the witness cannot be generated (e.g., checkpoint not available).
+    func getOrchardWitnessAtHeight(notePosition: UInt64, checkpointHeight: BlockHeight) async throws -> Data
 }
 
 public enum SyncStatus: Equatable {
