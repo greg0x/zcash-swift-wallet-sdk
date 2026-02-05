@@ -1402,6 +1402,35 @@ struct ZcashRustBackend: ZcashRustBackendWelding {
         )
     }
 
+    /// Extracts the Orchard tree root from a TreeState protobuf.
+    ///
+    /// This is used to verify that a generated witness produces the correct root.
+    /// The root from the witness should match the root from GetTreeState at the same height.
+    ///
+    /// - Parameter treeState: Protobuf-encoded TreeState from lightwalletd's GetTreeState RPC
+    /// - Returns: 32-byte Orchard tree root hash
+    func getOrchardTreeRootFromState(treeState: Data) throws -> Data {
+        let rootPtr = treeState.withUnsafeBytes { treeStatePtr in
+            zcashlc_get_orchard_tree_root_from_state(
+                treeStatePtr.baseAddress?.assumingMemoryBound(to: UInt8.self),
+                treeState.count
+            )
+        }
+
+        guard let rootPtr else {
+            throw ZcashError.rustGetOrchardWitnessWithFrontier(
+                lastErrorMessage(fallback: "`getOrchardTreeRootFromState` failed with unknown error")
+            )
+        }
+
+        defer { zcashlc_free_boxed_slice(rootPtr) }
+
+        return Data(
+            bytes: rootPtr.pointee.ptr,
+            count: Int(rootPtr.pointee.len)
+        )
+    }
+
     /// Lists all received Orchard notes with their commitment tree positions.
     ///
     /// This is a helper function for the voting demo that returns all Orchard notes

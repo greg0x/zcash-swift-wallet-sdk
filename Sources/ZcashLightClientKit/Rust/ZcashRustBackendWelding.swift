@@ -450,4 +450,13 @@ protocol ZcashRustBackendWelding {
     ///
     /// - Returns: Serialized array of notes (4 bytes count + 28 bytes per note: note_id, position, value, mined_height)
     func listOrchardNotes() async throws -> Data
+
+    /// Extracts the Orchard tree root from a TreeState protobuf.
+    ///
+    /// This is used to verify that a generated witness produces the correct root.
+    /// The root from the witness should match the root from GetTreeState at the same height.
+    ///
+    /// - Parameter treeState: Protobuf-encoded TreeState from lightwalletd's GetTreeState RPC
+    /// - Returns: 32-byte Orchard tree root hash
+    func getOrchardTreeRootFromState(treeState: Data) throws -> Data
 }

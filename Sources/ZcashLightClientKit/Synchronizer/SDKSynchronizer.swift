@@ -1330,6 +1330,16 @@ extension SDKSynchronizer {
             throw error
         }
     }
+
+    public func getOrchardTreeRoot(at height: BlockHeight) async throws -> Data {
+        let blockId = BlockID(height: height)
+        let treeState = try await initializer.lightWalletService.getTreeState(
+            blockId,
+            mode: await sdkFlags.ifTor(.uniqueTor)
+        )
+        let treeStateData = try treeState.serializedData()
+        return try initializer.rustBackend.getOrchardTreeRootFromState(treeState: treeStateData)
+    }
 }
 
 extension InternalSyncStatus {

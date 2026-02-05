@@ -621,6 +621,16 @@ public protocol Synchronizer: AnyObject {
     /// - Returns: Serialized witness data (position + root + path_len + auth_path).
     /// - Throws: If the witness cannot be generated (e.g., checkpoint not available).
     func getOrchardWitnessAtHeight(notePosition: UInt64, checkpointHeight: BlockHeight) async throws -> Data
+
+    /// Fetches the expected Orchard tree root at a specific block height from lightwalletd.
+    ///
+    /// This can be used to verify that a generated witness produces the correct root.
+    /// Compare this root with the root in the witness data (bytes 8-39).
+    ///
+    /// - Parameter height: The block height to get the tree root for.
+    /// - Returns: 32-byte Orchard tree root hash.
+    /// - Throws: If the tree state cannot be fetched or parsed.
+    func getOrchardTreeRoot(at height: BlockHeight) async throws -> Data
 }
 
 public enum SyncStatus: Equatable {

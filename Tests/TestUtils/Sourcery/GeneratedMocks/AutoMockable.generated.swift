@@ -2780,6 +2780,29 @@ class SynchronizerMock: Synchronizer {
         }
     }
 
+    // MARK: - getOrchardTreeRoot
+    var getOrchardTreeRootAtThrowableError: Error?
+    var getOrchardTreeRootAtCallsCount = 0
+    var getOrchardTreeRootAtCalled: Bool {
+        return getOrchardTreeRootAtCallsCount > 0
+    }
+    var getOrchardTreeRootAtReceivedHeight: BlockHeight?
+    var getOrchardTreeRootAtReturnValue: Data!
+    var getOrchardTreeRootAtClosure: ((BlockHeight) async throws -> Data)?
+
+    func getOrchardTreeRoot(at height: BlockHeight) async throws -> Data {
+        if let error = getOrchardTreeRootAtThrowableError {
+            throw error
+        }
+        getOrchardTreeRootAtCallsCount += 1
+        getOrchardTreeRootAtReceivedHeight = height
+        if let closure = getOrchardTreeRootAtClosure {
+            return try await closure(height)
+        } else {
+            return getOrchardTreeRootAtReturnValue
+        }
+    }
+
 }
 class TransactionRepositoryMock: TransactionRepository {
 
@@ -4305,6 +4328,29 @@ class ZcashRustBackendWeldingMock: ZcashRustBackendWelding {
             return try await closure()
         } else {
             return listOrchardNotesReturnValue
+        }
+    }
+
+    // MARK: - getOrchardTreeRootFromState
+    var getOrchardTreeRootFromStateThrowableError: Error?
+    var getOrchardTreeRootFromStateCallsCount = 0
+    var getOrchardTreeRootFromStateCalled: Bool {
+        return getOrchardTreeRootFromStateCallsCount > 0
+    }
+    var getOrchardTreeRootFromStateReceivedTreeState: Data?
+    var getOrchardTreeRootFromStateReturnValue: Data!
+    var getOrchardTreeRootFromStateClosure: ((Data) throws -> Data)?
+
+    func getOrchardTreeRootFromState(treeState: Data) throws -> Data {
+        if let error = getOrchardTreeRootFromStateThrowableError {
+            throw error
+        }
+        getOrchardTreeRootFromStateCallsCount += 1
+        getOrchardTreeRootFromStateReceivedTreeState = treeState
+        if let closure = getOrchardTreeRootFromStateClosure {
+            return try closure(treeState)
+        } else {
+            return getOrchardTreeRootFromStateReturnValue
         }
     }
 
