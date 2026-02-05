@@ -1299,36 +1299,25 @@ extension SDKSynchronizer {
     }
 
     public func getOrchardWitnessAtHeight(notePosition: UInt64, checkpointHeight: BlockHeight) async throws -> Data {
-        do {
-            // Try local witness generation first
-            return try await initializer.rustBackend.getOrchardWitnessAtHeight(
-                notePosition: notePosition,
-                checkpointHeight: checkpointHeight
-            )
-        } catch let error as ZcashError {
-            // Check if error is TreeIncomplete - need to fetch frontier from lightwalletd
-            // Must pattern match to extract the rustError associated value since localizedDescription is generic
-            if case let .rustGetOrchardWitnessAtHeight(rustError) = error,
-               rustError.contains("TreeIncomplete") || rustError.contains("Tree data incomplete") {
-                // Fetch tree state from lightwalletd
-                let blockId = BlockID(height: checkpointHeight)
-                let treeState = try await initializer.lightWalletService.getTreeState(
-                    blockId,
-                    mode: await sdkFlags.ifTor(.uniqueTor)
-                )
+        // Always fetch tree state from lightwalletd for reliable witness generation.
+        // Local shard data is often incomplete (wallets only download shards containing their own notes),
+        // which can produce witnesses with incorrect roots even when no error is thrown.
+        // The frontier from lightwalletd contains all ommer hashes needed for correct witness computation.
+        let blockId = BlockID(height: checkpointHeight)
+        let treeState = try await initializer.lightWalletService.getTreeState(
+            blockId,
+            mode: await sdkFlags.ifTor(.uniqueTor)
+        )
 
-                // Serialize the protobuf tree state
-                let treeStateData = try treeState.serializedData()
+        // Serialize the protobuf tree state
+        let treeStateData = try treeState.serializedData()
 
-                // Retry with frontier
-                return try await initializer.rustBackend.getOrchardWitnessWithFrontier(
-                    notePosition: notePosition,
-                    checkpointHeight: checkpointHeight,
-                    treeState: treeStateData
-                )
-            }
-            throw error
-        }
+        // Generate witness using the frontier from lightwalletd
+        return try await initializer.rustBackend.getOrchardWitnessWithFrontier(
+            notePosition: notePosition,
+            checkpointHeight: checkpointHeight,
+            treeState: treeStateData
+        )
     }
 
     public func getOrchardTreeRoot(at height: BlockHeight) async throws -> Data {
