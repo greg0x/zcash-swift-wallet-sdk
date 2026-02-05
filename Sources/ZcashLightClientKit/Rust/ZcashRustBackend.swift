@@ -1413,7 +1413,7 @@ struct ZcashRustBackend: ZcashRustBackendWelding {
         let rootPtr = treeState.withUnsafeBytes { treeStatePtr in
             zcashlc_get_orchard_tree_root_from_state(
                 treeStatePtr.baseAddress?.assumingMemoryBound(to: UInt8.self),
-                treeState.count
+                UInt(treeState.count)
             )
         }
 
