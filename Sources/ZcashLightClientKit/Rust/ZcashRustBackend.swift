@@ -1322,48 +1322,15 @@ struct ZcashRustBackend: ZcashRustBackendWelding {
 
     // MARK: - Voting Proposal Verification Demo
 
-    /// Gets the Orchard Merkle witness (inclusion proof) for a note at a specific checkpoint height.
-    ///
-    /// This enables verifying that a note existed in the commitment tree at a specific historical
-    /// height, which is useful for voting proposal verification where proofs must be anchored to
-    /// a specific "snapshot" height.
-    ///
-    /// - Parameters:
-    ///   - notePosition: The commitment tree position of the note
-    ///   - checkpointHeight: The block height to get the witness at (must be >= note's mined height)
-    /// - Returns: Serialized witness data (1068 bytes: position + root + path_len + auth_path)
-    @DBActor
-    func getOrchardWitnessAtHeight(
-        notePosition: UInt64,
-        checkpointHeight: BlockHeight
-    ) async throws -> Data {
-        let witnessPtr = zcashlc_get_orchard_witness_at_height(
-            dbData.0,
-            dbData.1,
-            networkType.networkId,
-            notePosition,
-            UInt32(checkpointHeight)
-        )
-
-        guard let witnessPtr else {
-            throw ZcashError.rustGetOrchardWitnessAtHeight(
-                lastErrorMessage(fallback: "`getOrchardWitnessAtHeight` failed with unknown error")
-            )
-        }
-
-        defer { zcashlc_free_boxed_slice(witnessPtr) }
-
-        return Data(
-            bytes: witnessPtr.pointee.ptr,
-            count: Int(witnessPtr.pointee.len)
-        )
-    }
-
     /// Generates an Orchard witness using a frontier from GetTreeState.
     ///
-    /// Use this when `getOrchardWitnessAtHeight` fails with TreeIncomplete error.
-    /// The frontier from GetTreeState contains all the sibling hashes needed to compute
-    /// witnesses for any note that existed at that height.
+    /// This function generates a Merkle witness (inclusion proof) for an Orchard note at a specific
+    /// checkpoint height, using the tree frontier fetched from lightwalletd. The frontier contains
+    /// all the sibling hashes needed to compute witnesses for any note that existed at that height.
+    ///
+    /// **Why frontier is required:** Local wallet data only contains tree shards for notes the wallet
+    /// owns. To compute a witness, we need sibling hashes that may be in shards the wallet never
+    /// downloaded. Using the frontier from lightwalletd ensures we always have the correct data.
     ///
     /// - Parameters:
     ///   - notePosition: The commitment tree position of the note
