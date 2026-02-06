@@ -631,6 +631,16 @@ public protocol Synchronizer: AnyObject {
     /// - Returns: 32-byte Orchard tree root hash.
     /// - Throws: If the tree state cannot be fetched or parsed.
     func getOrchardTreeRoot(at height: BlockHeight) async throws -> Data
+
+    /// Verifies an Orchard witness by recomputing the Merkle root.
+    ///
+    /// This simulates what the ZKP circuit does: hash the note commitment up the
+    /// auth path and verify it produces the expected root.
+    ///
+    /// - Parameter witnessData: Serialized witness from `getOrchardWitnessAtHeight` (1100 bytes)
+    /// - Returns: `true` if the witness is valid (computed root matches expected root)
+    /// - Throws: If verification fails due to malformed data.
+    func verifyOrchardWitness(witnessData: Data) async throws -> Bool
 }
 
 public enum SyncStatus: Equatable {

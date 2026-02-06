@@ -1398,6 +1398,30 @@ struct ZcashRustBackend: ZcashRustBackendWelding {
         )
     }
 
+    /// Verifies an Orchard witness by recomputing the Merkle root.
+    ///
+    /// This simulates what the ZKP circuit does: hash the note commitment up the
+    /// auth path and verify it produces the expected root.
+    ///
+    /// - Parameter witnessData: Serialized witness from `getOrchardWitnessWithFrontier` (1100 bytes)
+    /// - Returns: `true` if the witness is valid (computed root matches expected root)
+    func verifyOrchardWitness(witnessData: Data) throws -> Bool {
+        let result = witnessData.withUnsafeBytes { witnessPtr in
+            zcashlc_verify_orchard_witness(
+                witnessPtr.baseAddress?.assumingMemoryBound(to: UInt8.self),
+                UInt(witnessData.count)
+            )
+        }
+
+        if result == -1 {
+            throw ZcashError.rustGetOrchardWitnessWithFrontier(
+                lastErrorMessage(fallback: "`verifyOrchardWitness` failed with unknown error")
+            )
+        }
+
+        return result == 1
+    }
+
     /// Lists all received Orchard notes with their commitment tree positions.
     ///
     /// This is a helper function for the voting demo that returns all Orchard notes

@@ -448,4 +448,13 @@ protocol ZcashRustBackendWelding {
     /// - Parameter treeState: Protobuf-encoded TreeState from lightwalletd's GetTreeState RPC
     /// - Returns: 32-byte Orchard tree root hash
     func getOrchardTreeRootFromState(treeState: Data) throws -> Data
+
+    /// Verifies an Orchard witness by recomputing the Merkle root.
+    ///
+    /// This simulates what the ZKP circuit does: hash the note commitment up the
+    /// auth path and verify it produces the expected root.
+    ///
+    /// - Parameter witnessData: Serialized witness from `getOrchardWitnessWithFrontier` (1100 bytes)
+    /// - Returns: `true` if the witness is valid (computed root matches expected root)
+    func verifyOrchardWitness(witnessData: Data) throws -> Bool
 }

@@ -1329,6 +1329,10 @@ extension SDKSynchronizer {
         let treeStateData = try treeState.serializedData()
         return try initializer.rustBackend.getOrchardTreeRootFromState(treeState: treeStateData)
     }
+
+    public func verifyOrchardWitness(witnessData: Data) async throws -> Bool {
+        try initializer.rustBackend.verifyOrchardWitness(witnessData: witnessData)
+    }
 }
 
 extension InternalSyncStatus {
